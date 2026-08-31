@@ -7,6 +7,7 @@ export type Enemy = {
   y: number;
 
   radius: number;
+  spriteSize: number;
   speed: number;
 
   hp: number;
@@ -17,6 +18,8 @@ export type Enemy = {
 
   shootCooldown?: number;
   fireInterval?: number;
+
+  hitFlash: number;
 };
 
 export type Projectile = {
@@ -43,6 +46,7 @@ export type ExperienceOrb = {
   y: number;
   radius: number;
   value: number;
+  magnetRadius: number;
 };
 
 export type Upgrade = {

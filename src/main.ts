@@ -6,6 +6,7 @@ import { getRandomUpgrades } from "./systems/upgrades";
 import { createEnemy } from "./entities/enemies";
 import { updateEnemyMovement } from "./systems/enemyMovement";
 import { updateEnemyCombat } from "./systems/enemyCombat";
+import { sprites } from "./render/sprites";
 
 import type {
   Enemy,
@@ -117,6 +118,10 @@ const update = (deltaTime: number) => {
 
   // приближение врагов
   for (const enemy of enemies) {
+    if (enemy.hitFlash > 0) {
+      enemy.hitFlash -= deltaTime;
+    }
+
     updateEnemyMovement(enemy, deltaTime);
 
     updateEnemyCombat(enemy, enemyProjectiles, deltaTime);
@@ -190,6 +195,13 @@ const update = (deltaTime: number) => {
       if (distance < projectile.radius + enemy.radius) {
         enemy.hp -= 1;
 
+        enemy.hitFlash = 0.12;
+
+        const knockbackForce = 12;
+
+        enemy.x += projectile.directionX * knockbackForce;
+        enemy.y += projectile.directionY * knockbackForce;
+
         projectiles.splice(projectileIndex, 1);
 
         if (enemy.hp <= 0) {
@@ -198,6 +210,7 @@ const update = (deltaTime: number) => {
             y: enemy.y,
             radius: 8,
             value: enemy.xpValue,
+            magnetRadius: 120,
           });
 
           enemies.splice(enemyIndex, 1);
@@ -235,9 +248,25 @@ const update = (deltaTime: number) => {
   for (let orbIndex = experienceOrbs.length - 1; orbIndex >= 0; orbIndex--) {
     const orb = experienceOrbs[orbIndex];
 
-    const distance = Math.hypot(orb.x - player.x, orb.y - player.y);
+    const dx = player.x - orb.x;
+    const dy = player.y - orb.y;
 
-    if (distance < orb.radius + player.radius) {
+    const distance = Math.hypot(dx, dy);
+
+    // полет опыта к игроку
+    if (distance < orb.magnetRadius && distance > 0) {
+      const magnetSpeed = 350;
+
+      orb.x += (dx / distance) * magnetSpeed * deltaTime;
+
+      orb.y += (dy / distance) * magnetSpeed * deltaTime;
+    }
+
+    // пересчет расстояния
+    const pickupDistance = Math.hypot(orb.x - player.x, orb.y - player.y);
+
+    // подбор опыта
+    if (pickupDistance < orb.radius + player.radius) {
       player.xp += orb.value;
 
       // удаляем собранный опыт из массива
@@ -269,45 +298,89 @@ const render = () => {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // игрок
-  ctx.beginPath();
-  ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+  const playerSize = player.radius * 2;
 
-  ctx.fillStyle = player.damageCooldown > 0 ? "#ff6b6b" : "#fff";
-  ctx.fill();
+  ctx.drawImage(
+    sprites.player,
+    player.x - playerSize / 2,
+    player.y - playerSize / 2,
+    playerSize,
+    playerSize,
+  );
 
   // отрисовка противника
   for (const enemy of enemies) {
-    ctx.beginPath();
-
-    ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
-
     if (enemy.type === "zombie") {
-      ctx.fillStyle = "#e74c3c";
+      ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : 1;
+
+      ctx.drawImage(
+        sprites.zombie,
+        enemy.x - enemy.spriteSize / 2,
+        enemy.y - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+      );
+
+      ctx.globalAlpha = 1;
+    } else if (enemy.type === "bat") {
+      ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : 1;
+
+      const frameWidth = 32;
+      const frameHeight = 32;
+
+      const frameIndex = Math.floor(performance.now() / 150) % 2;
+
+      ctx.drawImage(
+        sprites.bat,
+
+        frameIndex * frameWidth,
+        0,
+        frameWidth,
+        frameHeight,
+
+        enemy.x - enemy.spriteSize / 2,
+        enemy.y - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+      );
+
+      ctx.globalAlpha = 1;
+    } else if (enemy.type === "brute") {
+      ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : 1;
+
+      ctx.drawImage(
+        sprites.brute,
+        enemy.x - enemy.spriteSize / 2,
+        enemy.y - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+      );
+
+      ctx.globalAlpha = 1;
+    } else if (enemy.type === "shooter") {
+      ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : 1;
+
+      ctx.drawImage(
+        sprites.shooter,
+        enemy.x - enemy.spriteSize / 2,
+        enemy.y - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+      );
+
+      ctx.globalAlpha = 1;
     }
 
-    if (enemy.type === "bat") {
-      ctx.fillStyle = "#9b59b6";
-    }
-
-    if (enemy.type === "brute") {
-      ctx.fillStyle = "#e67e22";
-    }
-
-    if (enemy.type === "shooter") {
-      ctx.fillStyle = "#3498db";
-    }
-
-    ctx.fill();
-
+    // HP BAR
     if (enemy.hp < enemy.maxHp) {
-      const barWidth = enemy.radius * 2;
+      const barWidth = enemy.spriteSize;
       const barHeight = 5;
 
       const healthPercent = enemy.hp / enemy.maxHp;
 
       const barX = enemy.x - barWidth / 2;
 
-      const barY = enemy.y - enemy.radius - 10;
+      const barY = enemy.y - enemy.spriteSize / 2 - 8;
 
       ctx.fillStyle = "#333";
 
@@ -384,12 +457,9 @@ const render = () => {
 
   // отрисовка выпавшего с врага опыта
   for (const orb of experienceOrbs) {
-    ctx.beginPath();
+    const size = orb.radius * 3;
 
-    ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
-
-    ctx.fillStyle = "#3498db";
-    ctx.fill();
+    ctx.drawImage(sprites.xp, orb.x - size / 2, orb.y - size / 2, size, size);
   }
 
   // полоса опыта

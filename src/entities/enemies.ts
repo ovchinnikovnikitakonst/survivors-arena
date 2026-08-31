@@ -2,6 +2,7 @@ import type { Enemy, EnemyType } from "../game/types";
 
 type EnemyConfig = {
   radius: number;
+  spriteSize: number;
   speed: number;
   hp: number;
   damage: number;
@@ -11,6 +12,7 @@ type EnemyConfig = {
 const enemyConfigs: Record<EnemyType, EnemyConfig> = {
   zombie: {
     radius: 18,
+    spriteSize: 48,
     speed: 100,
     hp: 2,
     damage: 10,
@@ -19,6 +21,7 @@ const enemyConfigs: Record<EnemyType, EnemyConfig> = {
 
   bat: {
     radius: 12,
+    spriteSize: 40,
     speed: 180,
     hp: 1,
     damage: 5,
@@ -27,6 +30,7 @@ const enemyConfigs: Record<EnemyType, EnemyConfig> = {
 
   brute: {
     radius: 30,
+    spriteSize: 140,
     speed: 60,
     hp: 6,
     damage: 25,
@@ -35,6 +39,7 @@ const enemyConfigs: Record<EnemyType, EnemyConfig> = {
 
   shooter: {
     radius: 16,
+    spriteSize: 48,
     speed: 80,
     hp: 3,
     damage: 8,
@@ -48,6 +53,8 @@ export const createEnemy = (type: EnemyType, x: number, y: number): Enemy => {
   return {
     type,
 
+    spriteSize: config.spriteSize,
+
     x,
     y,
 
@@ -59,6 +66,8 @@ export const createEnemy = (type: EnemyType, x: number, y: number): Enemy => {
 
     damage: config.damage,
     xpValue: config.xpValue,
+
+    hitFlash: 0,
 
     shootCooldown: type === "shooter" ? 0 : undefined,
 
