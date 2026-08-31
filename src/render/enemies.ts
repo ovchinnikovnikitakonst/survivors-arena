@@ -1,0 +1,140 @@
+import { camera } from "../game/camera";
+import { sprites } from "./sprites";
+
+import type { Enemy } from "../game/types";
+
+export const renderEnemies = (
+  ctx: CanvasRenderingContext2D,
+  enemies: Enemy[],
+) => {
+  for (const enemy of enemies) {
+    const screenX = enemy.x - camera.x;
+    const screenY = enemy.y - camera.y;
+
+    if (enemy.type === "boss" && enemy.isDying) {
+      const frameDuration = 0.06;
+
+      const frameIndex = Math.min(
+        Math.floor((enemy.deathAnimationTime ?? 0) / frameDuration),
+        sprites.bossDeath.length - 1,
+      );
+
+      ctx.drawImage(
+        sprites.bossDeath[frameIndex],
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+      );
+
+      continue;
+    }
+
+    ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : 1;
+
+    if (enemy.type === "zombie") {
+      ctx.drawImage(
+        sprites.zombie,
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+      );
+    }
+
+    if (enemy.type === "bat") {
+      const frameWidth = 32;
+      const frameHeight = 32;
+
+      const frameIndex = Math.floor(performance.now() / 150) % 2;
+
+      ctx.drawImage(
+        sprites.bat,
+        frameIndex * frameWidth,
+        0,
+        frameWidth,
+        frameHeight,
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+      );
+    }
+
+    if (enemy.type === "brute") {
+      ctx.drawImage(
+        sprites.brute,
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+      );
+    }
+
+    if (enemy.type === "shooter") {
+      ctx.drawImage(
+        sprites.shooter,
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+      );
+    }
+
+    if (enemy.type === "boss") {
+      const isPreparingDash = (enemy.bossDashWarning ?? 0) > 0;
+
+      if (isPreparingDash) {
+        ctx.beginPath();
+
+        ctx.arc(screenX, screenY, enemy.radius + 15, 0, Math.PI * 2);
+
+        ctx.strokeStyle = "#ff0000";
+        ctx.lineWidth = 5;
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.6;
+      }
+
+      ctx.drawImage(
+        sprites.boss,
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+      );
+    }
+
+    ctx.globalAlpha = 1;
+
+    renderEnemyHealthBar(ctx, enemy, screenX, screenY);
+  }
+};
+
+const renderEnemyHealthBar = (
+  ctx: CanvasRenderingContext2D,
+  enemy: Enemy,
+  screenX: number,
+  screenY: number,
+) => {
+  if (enemy.hp >= enemy.maxHp) {
+    return;
+  }
+
+  const barWidth = enemy.spriteSize;
+  const barHeight = 5;
+
+  const healthPercent = enemy.hp / enemy.maxHp;
+
+  const barX = screenX - barWidth / 2;
+
+  const barY = screenY - enemy.spriteSize / 2 - 8;
+
+  ctx.fillStyle = "#333";
+
+  ctx.fillRect(barX, barY, barWidth, barHeight);
+
+  ctx.fillStyle = "#2ecc71";
+
+  ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+};

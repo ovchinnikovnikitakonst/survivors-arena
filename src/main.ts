@@ -3,7 +3,6 @@ import "./style.css";
 import { player, resetPlayer } from "./entities/player";
 import { weapon, shoot, resetWeapon } from "./entities/weapon";
 import { getRandomUpgrades } from "./systems/upgrades";
-import { sprites } from "./render/sprites";
 import { camera } from "./game/camera";
 import { renderWorld } from "./render/world";
 import { updatePlayerMovement } from "./systems/playerMovement";
@@ -11,6 +10,11 @@ import { updateProjectiles } from "./systems/projectileSystem";
 import { updateEnemies } from "./systems/enemySystem";
 import { updateSpawnSystem } from "./systems/spawnSystem";
 import { updateExperience } from "./systems/experienceSystem";
+import { renderEnemies } from "./render/enemies";
+import { renderPlayer } from "./render/player";
+import { renderProjectiles } from "./render/projectiles";
+import { renderExperienceOrbs } from "./render/experience";
+import { renderHud } from "./render/hud";
 
 import type {
   Enemy,
@@ -182,177 +186,21 @@ const render = () => {
   // фон
   renderWorld(ctx, canvas);
 
-  // игрок
-  const playerSize = player.radius * 2;
+  renderPlayer(ctx);
 
-  const playerScreenX = player.x - camera.x;
-  const playerScreenY = player.y - camera.y;
+  renderEnemies(ctx, enemies);
 
-  ctx.drawImage(
-    sprites.player,
-    playerScreenX - playerSize / 2,
-    playerScreenY - playerSize / 2,
-    playerSize,
-    playerSize,
-  );
+  renderProjectiles(ctx, projectiles, enemyProjectiles);
 
-  // отрисовка противника
-  for (const enemy of enemies) {
-    const screenX = enemy.x - camera.x;
-    const screenY = enemy.y - camera.y;
+  renderExperienceOrbs(ctx, experienceOrbs);
 
-    if (enemy.type === "boss" && enemy.isDying) {
-      const frameDuration = 0.06;
-
-      const frameIndex = Math.min(
-        Math.floor((enemy.deathAnimationTime ?? 0) / frameDuration),
-        sprites.bossDeath.length - 1,
-      );
-
-      ctx.drawImage(
-        sprites.bossDeath[frameIndex],
-        screenX - enemy.spriteSize / 2,
-        screenY - enemy.spriteSize / 2,
-        enemy.spriteSize,
-        enemy.spriteSize,
-      );
-
-      continue;
-    }
-
-    if (enemy.type === "zombie") {
-      ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : 1;
-
-      ctx.drawImage(
-        sprites.zombie,
-        screenX - enemy.spriteSize / 2,
-        screenY - enemy.spriteSize / 2,
-        enemy.spriteSize,
-        enemy.spriteSize,
-      );
-
-      ctx.globalAlpha = 1;
-    } else if (enemy.type === "bat") {
-      ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : 1;
-
-      const frameWidth = 32;
-      const frameHeight = 32;
-
-      const frameIndex = Math.floor(performance.now() / 150) % 2;
-
-      ctx.drawImage(
-        sprites.bat,
-
-        frameIndex * frameWidth,
-        0,
-        frameWidth,
-        frameHeight,
-
-        screenX - enemy.spriteSize / 2,
-        screenY - enemy.spriteSize / 2,
-        enemy.spriteSize,
-        enemy.spriteSize,
-      );
-
-      ctx.globalAlpha = 1;
-    } else if (enemy.type === "brute") {
-      ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : 1;
-
-      ctx.drawImage(
-        sprites.brute,
-        screenX - enemy.spriteSize / 2,
-        screenY - enemy.spriteSize / 2,
-        enemy.spriteSize,
-        enemy.spriteSize,
-      );
-
-      ctx.globalAlpha = 1;
-    } else if (enemy.type === "shooter") {
-      ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : 1;
-
-      ctx.drawImage(
-        sprites.shooter,
-        screenX - enemy.spriteSize / 2,
-        screenY - enemy.spriteSize / 2,
-        enemy.spriteSize,
-        enemy.spriteSize,
-      );
-
-      ctx.globalAlpha = 1;
-    } else if (enemy.type === "boss") {
-      const isPreparingDash = (enemy.bossDashWarning ?? 0) > 0;
-
-      if (isPreparingDash) {
-        ctx.beginPath();
-
-        ctx.arc(screenX, screenY, enemy.radius + 15, 0, Math.PI * 2);
-
-        ctx.strokeStyle = "#ff0000";
-        ctx.lineWidth = 5;
-        ctx.stroke();
-      }
-
-      ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : isPreparingDash ? 0.6 : 1;
-
-      ctx.drawImage(
-        sprites.boss,
-        screenX - enemy.spriteSize / 2,
-        screenY - enemy.spriteSize / 2,
-        enemy.spriteSize,
-        enemy.spriteSize,
-      );
-
-      ctx.globalAlpha = 1;
-    }
-
-    // HP BAR
-    if (enemy.hp < enemy.maxHp) {
-      const barWidth = enemy.spriteSize;
-      const barHeight = 5;
-
-      const healthPercent = enemy.hp / enemy.maxHp;
-
-      const barX = screenX - barWidth / 2;
-
-      const barY = screenY - enemy.spriteSize / 2 - 8;
-
-      ctx.fillStyle = "#333";
-
-      ctx.fillRect(barX, barY, barWidth, barHeight);
-
-      ctx.fillStyle = "#2ecc71";
-
-      ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
-    }
-  }
-
-  // отрисовка пуль
-  for (const projectile of projectiles) {
-    const screenX = projectile.x - camera.x;
-
-    const screenY = projectile.y - camera.y;
-
-    ctx.beginPath();
-
-    ctx.arc(screenX, screenY, projectile.radius, 0, Math.PI * 2);
-
-    ctx.fillStyle = "#f1c40f";
-    ctx.fill();
-  }
-
-  // отписовка пуль противника
-  for (const projectile of enemyProjectiles) {
-    ctx.beginPath();
-
-    const screenX = projectile.x - camera.x;
-
-    const screenY = projectile.y - camera.y;
-
-    ctx.arc(screenX, screenY, projectile.radius, 0, Math.PI * 2);
-
-    ctx.fillStyle = "#ff4757";
-    ctx.fill();
-  }
+  renderHud({
+    ctx,
+    canvas,
+    gameTime,
+    kills,
+    wave,
+  });
 
   // проипали
   if (gameState === "gameOver") {
@@ -375,84 +223,6 @@ const render = () => {
       canvas.height / 2 + 50,
     );
   }
-
-  // полоса hp
-  const healthBarWidth = 300;
-  const healthBarHeight = 20;
-
-  const healthPercent = player.hp / player.maxHp;
-
-  ctx.fillStyle = "#333";
-
-  ctx.fillRect(20, 20, healthBarWidth, healthBarHeight);
-
-  ctx.fillStyle = "#2ecc71";
-
-  ctx.fillRect(20, 20, healthBarWidth * healthPercent, healthBarHeight);
-
-  ctx.fillStyle = "#fff";
-  ctx.font = "16px Arial";
-
-  ctx.fillText(`${player.hp} / ${player.maxHp}`, 25, 36);
-
-  // вывод опыта
-  ctx.fillStyle = "#fff";
-  ctx.font = "16px Arial";
-
-  // вывод уровни
-  ctx.fillText(`Level: ${player.level}`, 20, 65);
-
-  // вывод опыта
-  ctx.fillText(`XP: ${player.xp} / ${player.xpToNextLevel}`, 20, 90);
-
-  // вывод времени волны и убийств
-  const minutes = Math.floor(gameTime / 60);
-
-  const seconds = Math.floor(gameTime % 60);
-
-  const formattedTime =
-    `${minutes.toString().padStart(2, "0")}:` +
-    `${seconds.toString().padStart(2, "0")}`;
-
-  ctx.fillText(`Time: ${formattedTime}`, 20, 115);
-
-  ctx.fillText(`Kills: ${kills}`, 20, 140);
-
-  ctx.fillText(`Wave: ${wave}`, 20, 165);
-
-  // отрисовка выпавшего с врага опыта
-  for (const orb of experienceOrbs) {
-    const size = orb.radius * 3;
-
-    const screenX = orb.x - camera.x;
-    const screenY = orb.y - camera.y;
-
-    ctx.drawImage(
-      sprites.xp,
-      screenX - size / 2,
-      screenY - size / 2,
-      size,
-      size,
-    );
-  }
-
-  // полоса опыта
-  const xpBarHeight = 12;
-
-  const xpPercent = player.xp / player.xpToNextLevel;
-
-  ctx.fillStyle = "#222";
-
-  ctx.fillRect(0, canvas.height - xpBarHeight, canvas.width, xpBarHeight);
-
-  ctx.fillStyle = "#3498db";
-
-  ctx.fillRect(
-    0,
-    canvas.height - xpBarHeight,
-    canvas.width * xpPercent,
-    xpBarHeight,
-  );
 
   // орисовка улучшений при повышении уровня
   if (gameState === "levelUp") {

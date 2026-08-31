@@ -24,7 +24,6 @@ export const updateSpawnSystem = ({
   canvas,
   deltaTime,
   gameTime,
-  wave,
   spawnCooldown,
   bossSpawnedWave,
 }: UpdateSpawnParams): UpdateSpawnResult => {
