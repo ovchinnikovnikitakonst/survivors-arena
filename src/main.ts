@@ -1,0 +1,438 @@
+import "./style.css";
+
+import { player } from "./entities/player";
+import { weapon, shoot } from "./entities/weapon";
+import { getRandomUpgrades } from "./systems/upgrades";
+import { createEnemy } from "./entities/enemies";
+
+import type {
+  Enemy,
+  EnemyType,
+  Projectile,
+  ExperienceOrb,
+  Upgrade,
+  GameState,
+} from "./game/types";
+
+const canvas = document.querySelector<HTMLCanvasElement>("#game");
+
+if (!canvas) {
+  throw new Error("Canvas not found");
+}
+
+const ctx = canvas.getContext("2d");
+
+if (!ctx) {
+  throw new Error("Canvas context not found");
+}
+
+const resize = () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+};
+
+window.addEventListener("resize", resize);
+
+resize();
+
+// показывающиеся перки
+let currentUpgrades: Upgrade[] = [];
+
+// состояние игры
+let gameState: GameState = "playing";
+
+// массив наших противников
+const enemies: Enemy[] = [];
+// массив выпадающего опыта с противника
+const experienceOrbs: ExperienceOrb[] = [];
+// массив наших пуль
+const projectiles: Projectile[] = [];
+
+const keys = new Set<string>();
+
+window.addEventListener("keydown", (event) => {
+  if (gameState === "levelUp") {
+    // выбор перка
+    if (event.code === "Digit1") {
+      selectUpgrade(0);
+    }
+
+    if (event.code === "Digit2") {
+      selectUpgrade(1);
+    }
+
+    if (event.code === "Digit3") {
+      selectUpgrade(2);
+    }
+
+    return;
+  }
+
+  keys.add(event.code);
+});
+
+window.addEventListener("keyup", (event) => {
+  keys.delete(event.code);
+});
+
+let previousTime = performance.now();
+
+const update = (deltaTime: number) => {
+  // проипали
+  if (player.hp <= 0) {
+    return;
+  }
+  // проверка в каком состоянии игра
+  if (gameState !== "playing") {
+    return;
+  }
+
+  // уменьшение кд урона по игроку
+  if (player.damageCooldown > 0) {
+    player.damageCooldown -= deltaTime;
+  }
+  // движение игрока
+  let x = 0;
+  let y = 0;
+
+  if (keys.has("KeyW")) y -= 1;
+  if (keys.has("KeyS")) y += 1;
+  if (keys.has("KeyA")) x -= 1;
+  if (keys.has("KeyD")) x += 1;
+
+  const length = Math.hypot(x, y);
+
+  if (length > 0) {
+    x /= length;
+    y /= length;
+  }
+
+  player.x += x * player.speed * deltaTime;
+  player.y += y * player.speed * deltaTime;
+
+  // приближение врагов
+  for (const enemy of enemies) {
+    const dx = player.x - enemy.x;
+    const dy = player.y - enemy.y;
+
+    const distance = Math.hypot(dx, dy);
+
+    if (distance > 0) {
+      enemy.x += (dx / distance) * enemy.speed * deltaTime;
+      enemy.y += (dy / distance) * enemy.speed * deltaTime;
+    }
+  }
+
+  // СТОЛКНОВЕНИЕ!!!
+  for (const enemy of enemies) {
+    const distance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+
+    if (distance < enemy.radius + player.radius && player.damageCooldown <= 0) {
+      player.hp = Math.max(0, player.hp - enemy.damage);
+
+      player.damageCooldown = 0.75;
+
+      // проверка на проигрыш
+      if (player.hp <= 0) {
+        gameState = "gameOver";
+      }
+    }
+  }
+
+  // выстрел
+  weapon.shootCooldown -= deltaTime;
+
+  if (weapon.shootCooldown <= 0) {
+    shoot(enemies, projectiles);
+
+    weapon.shootCooldown = weapon.fireInterval;
+  }
+
+  //  движение пули
+  for (const projectile of projectiles) {
+    projectile.x += projectile.directionX * projectile.speed * deltaTime;
+
+    projectile.y += projectile.directionY * projectile.speed * deltaTime;
+  }
+
+  // попадание пули в противника
+  for (
+    let projectileIndex = projectiles.length - 1;
+    projectileIndex >= 0;
+    projectileIndex--
+  ) {
+    const projectile = projectiles[projectileIndex];
+
+    for (let enemyIndex = enemies.length - 1; enemyIndex >= 0; enemyIndex--) {
+      const enemy = enemies[enemyIndex];
+
+      const distance = Math.hypot(
+        projectile.x - enemy.x,
+        projectile.y - enemy.y,
+      );
+
+      if (distance < projectile.radius + enemy.radius) {
+        enemy.hp -= 1;
+
+        projectiles.splice(projectileIndex, 1);
+
+        if (enemy.hp <= 0) {
+          experienceOrbs.push({
+            x: enemy.x,
+            y: enemy.y,
+            radius: 8,
+            value: enemy.xpValue,
+          });
+
+          enemies.splice(enemyIndex, 1);
+        }
+
+        break;
+      }
+    }
+  }
+
+  // сбор опыта
+  for (let orbIndex = experienceOrbs.length - 1; orbIndex >= 0; orbIndex--) {
+    const orb = experienceOrbs[orbIndex];
+
+    const distance = Math.hypot(orb.x - player.x, orb.y - player.y);
+
+    if (distance < orb.radius + player.radius) {
+      player.xp += orb.value;
+
+      // удаляем собранный опыт из массива
+      experienceOrbs.splice(orbIndex, 1);
+
+      // чекаем на повышение ЛВЛа
+      if (player.xp >= player.xpToNextLevel) {
+        player.xp -= player.xpToNextLevel;
+
+        player.level += 1;
+
+        // увеличиваем колво опыта для некст ЛВЛа
+        player.xpToNextLevel = Math.floor(player.xpToNextLevel * 1.5);
+
+        // выбираем случайные перки на выбор
+        currentUpgrades = getRandomUpgrades(3);
+
+        gameState = "levelUp";
+      }
+    }
+  }
+};
+
+const render = () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // фон
+  ctx.fillStyle = "#111";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // игрок
+  ctx.beginPath();
+  ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+
+  ctx.fillStyle = player.damageCooldown > 0 ? "#ff6b6b" : "#fff";
+  ctx.fill();
+
+  // отрисовка противника
+  for (const enemy of enemies) {
+    ctx.beginPath();
+
+    ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+
+    if (enemy.type === "zombie") {
+      ctx.fillStyle = "#e74c3c";
+    }
+
+    if (enemy.type === "bat") {
+      ctx.fillStyle = "#9b59b6";
+    }
+
+    if (enemy.type === "brute") {
+      ctx.fillStyle = "#e67e22";
+    }
+
+    ctx.fill();
+  }
+
+  // отрисовка пуль
+  for (const projectile of projectiles) {
+    ctx.beginPath();
+
+    ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+
+    ctx.fillStyle = "#f1c40f";
+    ctx.fill();
+  }
+
+  // проипали
+  if (gameState === "gameOver") {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "48px Arial";
+    ctx.textAlign = "center";
+
+    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
+
+    ctx.textAlign = "start";
+  }
+
+  // полоса hp
+  const healthBarWidth = 300;
+  const healthBarHeight = 20;
+
+  const healthPercent = player.hp / player.maxHp;
+
+  ctx.fillStyle = "#333";
+
+  ctx.fillRect(20, 20, healthBarWidth, healthBarHeight);
+
+  ctx.fillStyle = "#2ecc71";
+
+  ctx.fillRect(20, 20, healthBarWidth * healthPercent, healthBarHeight);
+
+  ctx.fillStyle = "#fff";
+  ctx.font = "16px Arial";
+
+  ctx.fillText(`${player.hp} / ${player.maxHp}`, 25, 36);
+
+  // вывод опыта
+  ctx.fillStyle = "#fff";
+  ctx.font = "16px Arial";
+
+  // вывод уровни
+  ctx.fillText(`Level: ${player.level}`, 20, 65);
+
+  // вывод опыта
+  ctx.fillText(`XP: ${player.xp} / ${player.xpToNextLevel}`, 20, 90);
+
+  // отрисовка выпавшего с врага опыта
+  for (const orb of experienceOrbs) {
+    ctx.beginPath();
+
+    ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
+
+    ctx.fillStyle = "#3498db";
+    ctx.fill();
+  }
+
+  // полоса опыта
+  const xpBarHeight = 12;
+
+  const xpPercent = player.xp / player.xpToNextLevel;
+
+  ctx.fillStyle = "#222";
+
+  ctx.fillRect(0, canvas.height - xpBarHeight, canvas.width, xpBarHeight);
+
+  ctx.fillStyle = "#3498db";
+
+  ctx.fillRect(
+    0,
+    canvas.height - xpBarHeight,
+    canvas.width * xpPercent,
+    xpBarHeight,
+  );
+
+  // орисовка улучшений при повышении уровня
+  if (gameState === "levelUp") {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+
+    ctx.font = "48px Arial";
+
+    ctx.fillText("LEVEL UP", canvas.width / 2, canvas.height / 2 - 140);
+
+    ctx.font = "24px Arial";
+
+    currentUpgrades.forEach((upgrade, index) => {
+      const y = canvas.height / 2 - 50 + index * 60;
+
+      ctx.fillText(
+        `${index + 1} — ${upgrade.name}: ${upgrade.description}`,
+        canvas.width / 2,
+        y,
+      );
+    });
+
+    ctx.textAlign = "start";
+  }
+};
+
+const gameLoop = (currentTime: number) => {
+  const deltaTime = (currentTime - previousTime) / 1000;
+
+  previousTime = currentTime;
+
+  update(deltaTime);
+  render();
+
+  requestAnimationFrame(gameLoop);
+};
+
+requestAnimationFrame(gameLoop);
+
+// функция спавн противника
+const spawnEnemy = () => {
+  const side = Math.floor(Math.random() * 4);
+
+  let x = 0;
+  let y = 0;
+
+  if (side === 0) {
+    x = Math.random() * canvas.width;
+    y = -30;
+  }
+
+  if (side === 1) {
+    x = canvas.width + 30;
+    y = Math.random() * canvas.height;
+  }
+
+  if (side === 2) {
+    x = Math.random() * canvas.width;
+    y = canvas.height + 30;
+  }
+
+  if (side === 3) {
+    x = -30;
+    y = Math.random() * canvas.height;
+  }
+
+  const random = Math.random();
+
+  let enemyType: EnemyType = "zombie";
+
+  if (random < 0.2) {
+    enemyType = "bat";
+  }
+
+  if (random > 0.9) {
+    enemyType = "brute";
+  }
+
+  enemies.push(createEnemy(enemyType, x, y));
+};
+
+//  спавн противника в определенное время
+setInterval(spawnEnemy, 1000);
+
+// функция выбора перка при повышении уровня
+const selectUpgrade = (index: number) => {
+  const upgrade = currentUpgrades[index];
+
+  if (!upgrade) {
+    return;
+  }
+
+  upgrade.apply();
+
+  gameState = "playing";
+};
