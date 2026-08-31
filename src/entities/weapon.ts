@@ -27,6 +27,8 @@ export const shoot = (enemies: Enemy[], projectiles: Projectile[]) => {
   const dx = target.x - player.x;
   const dy = target.y - player.y;
 
+  player.facingAngle = Math.atan2(dy, dx);
+
   const distance = Math.hypot(dx, dy);
 
   const baseDirectionX = dx / distance;

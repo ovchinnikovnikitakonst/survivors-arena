@@ -1,5 +1,8 @@
 import { camera } from "../game/camera";
 import { sprites } from "./sprites";
+import { player } from "../entities/player";
+import { drawImageFlippedX } from "./utils";
+import { drawImageRotated } from "./utils";
 
 import type { Enemy } from "../game/types";
 
@@ -33,12 +36,19 @@ export const renderEnemies = (
     ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : 1;
 
     if (enemy.type === "zombie") {
-      ctx.drawImage(
+      const dx = player.x - enemy.x;
+      const dy = player.y - enemy.y;
+
+      const angle = Math.atan2(dy, dx);
+
+      drawImageRotated(
+        ctx,
         sprites.zombie,
         screenX - enemy.spriteSize / 2,
         screenY - enemy.spriteSize / 2,
         enemy.spriteSize,
         enemy.spriteSize,
+        angle,
       );
     }
 
@@ -62,22 +72,36 @@ export const renderEnemies = (
     }
 
     if (enemy.type === "brute") {
-      ctx.drawImage(
+      const dx = player.x - enemy.x;
+      const dy = player.y - enemy.y;
+
+      const angle = Math.atan2(dy, dx);
+
+      drawImageRotated(
+        ctx,
         sprites.brute,
         screenX - enemy.spriteSize / 2,
         screenY - enemy.spriteSize / 2,
         enemy.spriteSize,
         enemy.spriteSize,
+        angle,
       );
     }
 
     if (enemy.type === "shooter") {
-      ctx.drawImage(
+      const dx = player.x - enemy.x;
+      const dy = player.y - enemy.y;
+
+      const angle = Math.atan2(dy, dx);
+
+      drawImageRotated(
+        ctx,
         sprites.shooter,
         screenX - enemy.spriteSize / 2,
         screenY - enemy.spriteSize / 2,
         enemy.spriteSize,
         enemy.spriteSize,
+        angle,
       );
     }
 
@@ -96,12 +120,16 @@ export const renderEnemies = (
         ctx.globalAlpha = 0.6;
       }
 
-      ctx.drawImage(
+      const flipX = player.x > enemy.x;
+
+      drawImageFlippedX(
+        ctx,
         sprites.boss,
         screenX - enemy.spriteSize / 2,
         screenY - enemy.spriteSize / 2,
         enemy.spriteSize,
         enemy.spriteSize,
+        flipX,
       );
     }
 

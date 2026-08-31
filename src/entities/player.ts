@@ -16,6 +16,8 @@ const DEFAULT_PLAYER = {
   level: 1,
   xp: 0,
   xpToNextLevel: 5,
+
+  facingAngle: 0,
 };
 
 export const player = {
