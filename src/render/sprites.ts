@@ -14,6 +14,14 @@ export const sprites = {
   shooter: loadImage("/sprites/shooter.png"),
   xp: loadImage("/sprites/xp.png"),
 
+  boss: loadImage("/sprites/boss/Boss.png"),
+
+  bossDeath: Array.from({ length: 25 }, (_, index) =>
+    loadImage(
+      `/sprites/boss/Boss-Death_${String(index + 1).padStart(2, "0")}.png`,
+    ),
+  ),
+
   world: {
     grass: loadImage("/sprites/world/grass.png"),
     rock: loadImage("/sprites/world/rock.png"),

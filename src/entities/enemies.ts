@@ -45,6 +45,17 @@ const enemyConfigs: Record<EnemyType, EnemyConfig> = {
     damage: 8,
     xpValue: 2,
   },
+
+  boss: {
+    radius: 45,
+    spriteSize: 220,
+    speed: 55,
+
+    hp: 25,
+    damage: 25,
+
+    xpValue: 15,
+  },
 };
 
 export const createEnemy = (type: EnemyType, x: number, y: number): Enemy => {

@@ -55,4 +55,37 @@ export const updateEnemyMovement = (enemy: Enemy, deltaTime: number) => {
 
     enemy.y += directionY * enemy.speed * deltaTime;
   }
+
+  if (enemy.type === "boss") {
+    enemy.bossDashCooldown ??= 3;
+    enemy.bossDashWarning ??= 0;
+
+    if (enemy.bossDashWarning > 0) {
+      enemy.bossDashWarning -= deltaTime;
+
+      if (enemy.bossDashWarning <= 0) {
+        const dashForce = 220;
+
+        enemy.x += directionX * dashForce;
+        enemy.y += directionY * dashForce;
+
+        enemy.bossDashCooldown = 3;
+      }
+
+      return;
+    }
+
+    enemy.bossDashCooldown -= deltaTime;
+
+    if (enemy.bossDashCooldown <= 0) {
+      enemy.bossDashWarning = 0.5;
+
+      return;
+    }
+
+    enemy.x += directionX * enemy.speed * deltaTime;
+    enemy.y += directionY * enemy.speed * deltaTime;
+
+    return;
+  }
 };

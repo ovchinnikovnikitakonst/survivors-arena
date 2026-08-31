@@ -1,4 +1,4 @@
-export type EnemyType = "zombie" | "bat" | "brute" | "shooter";
+export type EnemyType = "zombie" | "bat" | "brute" | "shooter" | "boss";
 
 export type Enemy = {
   type: EnemyType;
@@ -20,6 +20,12 @@ export type Enemy = {
   fireInterval?: number;
 
   hitFlash: number;
+
+  bossDashCooldown?: number;
+  bossDashWarning?: number;
+
+  isDying?: boolean;
+  deathAnimationTime?: number;
 };
 
 export type Projectile = {

@@ -47,6 +47,11 @@ let currentUpgrades: Upgrade[] = [];
 
 // состояние игры
 let gameState: GameState = "playing";
+let gameTime = 0;
+let kills = 0;
+let wave = 1;
+let spawnCooldown = 0;
+let bossSpawnedWave = 0;
 
 // массив наших противников
 const enemies: Enemy[] = [];
@@ -100,6 +105,30 @@ const update = (deltaTime: number) => {
   if (gameState !== "playing") {
     return;
   }
+  // учет времени игры
+  gameTime += deltaTime;
+
+  // босс под конец каждой волны
+  wave = Math.floor(gameTime / 30) + 1;
+
+  const timeInWave = gameTime % 30;
+
+  if (timeInWave >= 25 && bossSpawnedWave !== wave) {
+    spawnBoss();
+
+    bossSpawnedWave = wave;
+  }
+
+  // уменьшаем количество времени спавна
+  spawnCooldown -= deltaTime;
+
+  const spawnInterval = Math.max(0.25, 1 - (wave - 1) * 0.1);
+
+  if (spawnCooldown <= 0) {
+    spawnEnemy();
+
+    spawnCooldown = spawnInterval;
+  }
 
   // уменьшение кд урона по игроку
   if (player.damageCooldown > 0) {
@@ -143,6 +172,12 @@ const update = (deltaTime: number) => {
 
   // приближение врагов
   for (const enemy of enemies) {
+    if (enemy.isDying) {
+      enemy.deathAnimationTime = (enemy.deathAnimationTime ?? 0) + deltaTime;
+
+      continue;
+    }
+
     if (enemy.hitFlash > 0) {
       enemy.hitFlash -= deltaTime;
     }
@@ -176,6 +211,14 @@ const update = (deltaTime: number) => {
       if (player.hp <= 0) {
         gameState = "gameOver";
       }
+    }
+  }
+
+  for (let enemyIndex = enemies.length - 1; enemyIndex >= 0; enemyIndex--) {
+    const enemy = enemies[enemyIndex];
+
+    if (enemy.isDying && (enemy.deathAnimationTime ?? 0) >= 1.5) {
+      enemies.splice(enemyIndex, 1);
     }
   }
 
@@ -230,6 +273,8 @@ const update = (deltaTime: number) => {
         projectiles.splice(projectileIndex, 1);
 
         if (enemy.hp <= 0) {
+          kills += 1;
+
           experienceOrbs.push({
             x: enemy.x,
             y: enemy.y,
@@ -238,7 +283,12 @@ const update = (deltaTime: number) => {
             magnetRadius: 120,
           });
 
-          enemies.splice(enemyIndex, 1);
+          if (enemy.type === "boss") {
+            enemy.isDying = true;
+            enemy.deathAnimationTime = 0;
+          } else {
+            enemies.splice(enemyIndex, 1);
+          }
         }
 
         break;
@@ -340,6 +390,25 @@ const render = () => {
     const screenX = enemy.x - camera.x;
     const screenY = enemy.y - camera.y;
 
+    if (enemy.type === "boss" && enemy.isDying) {
+      const frameDuration = 0.06;
+
+      const frameIndex = Math.min(
+        Math.floor((enemy.deathAnimationTime ?? 0) / frameDuration),
+        sprites.bossDeath.length - 1,
+      );
+
+      ctx.drawImage(
+        sprites.bossDeath[frameIndex],
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+      );
+
+      continue;
+    }
+
     if (enemy.type === "zombie") {
       ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : 1;
 
@@ -392,6 +461,30 @@ const render = () => {
 
       ctx.drawImage(
         sprites.shooter,
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+      );
+
+      ctx.globalAlpha = 1;
+    } else if (enemy.type === "boss") {
+      const isPreparingDash = (enemy.bossDashWarning ?? 0) > 0;
+
+      if (isPreparingDash) {
+        ctx.beginPath();
+
+        ctx.arc(screenX, screenY, enemy.radius + 15, 0, Math.PI * 2);
+
+        ctx.strokeStyle = "#ff0000";
+        ctx.lineWidth = 5;
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : isPreparingDash ? 0.6 : 1;
+
+      ctx.drawImage(
+        sprites.boss,
         screenX - enemy.spriteSize / 2,
         screenY - enemy.spriteSize / 2,
         enemy.spriteSize,
@@ -501,6 +594,21 @@ const render = () => {
   // вывод опыта
   ctx.fillText(`XP: ${player.xp} / ${player.xpToNextLevel}`, 20, 90);
 
+  // вывод времени волны и убийств
+  const minutes = Math.floor(gameTime / 60);
+
+  const seconds = Math.floor(gameTime % 60);
+
+  const formattedTime =
+    `${minutes.toString().padStart(2, "0")}:` +
+    `${seconds.toString().padStart(2, "0")}`;
+
+  ctx.fillText(`Time: ${formattedTime}`, 20, 115);
+
+  ctx.fillText(`Kills: ${kills}`, 20, 140);
+
+  ctx.fillText(`Wave: ${wave}`, 20, 165);
+
   // отрисовка выпавшего с врага опыта
   for (const orb of experienceOrbs) {
     const size = orb.radius * 3;
@@ -580,46 +688,123 @@ requestAnimationFrame(gameLoop);
 const spawnEnemy = () => {
   const side = Math.floor(Math.random() * 4);
 
+  const margin = 50;
+
   let x = 0;
   let y = 0;
 
   if (side === 0) {
-    x = Math.random() * canvas.width;
-    y = -30;
+    x = camera.x + Math.random() * canvas.width;
+    y = camera.y - margin;
   }
 
   if (side === 1) {
-    x = canvas.width + 30;
-    y = Math.random() * canvas.height;
+    x = camera.x + canvas.width + margin;
+    y = camera.y + Math.random() * canvas.height;
   }
 
   if (side === 2) {
-    x = Math.random() * canvas.width;
-    y = canvas.height + 30;
+    x = camera.x + Math.random() * canvas.width;
+    y = camera.y + canvas.height + margin;
   }
 
   if (side === 3) {
-    x = -30;
-    y = Math.random() * canvas.height;
+    x = camera.x - margin;
+    y = camera.y + Math.random() * canvas.height;
   }
 
   const random = Math.random();
 
   let enemyType: EnemyType = "zombie";
 
-  if (random < 0.15) {
-    enemyType = "bat";
-  } else if (random < 0.25) {
-    enemyType = "shooter";
-  } else if (random < 0.35) {
-    enemyType = "brute";
+  if (wave === 1) {
+    if (random < 0.2) {
+      enemyType = "bat";
+    }
   }
 
-  enemies.push(createEnemy(enemyType, x, y));
+  if (wave === 2) {
+    if (random < 0.2) {
+      enemyType = "bat";
+    } else if (random < 0.3) {
+      enemyType = "shooter";
+    }
+  }
+
+  if (wave >= 3) {
+    if (random < 0.2) {
+      enemyType = "bat";
+    } else if (random < 0.35) {
+      enemyType = "shooter";
+    } else if (random < 0.5) {
+      enemyType = "brute";
+    }
+  }
+
+  const enemy = createEnemy(enemyType, x, y);
+
+  const difficultyMultiplier = 1 + (wave - 1) * 0.15;
+
+  enemy.hp = Math.ceil(enemy.hp * difficultyMultiplier);
+
+  enemy.maxHp = enemy.hp;
+
+  enemy.damage = Math.ceil(enemy.damage * difficultyMultiplier);
+
+  enemy.speed *= 1 + (wave - 1) * 0.03;
+
+  enemies.push(enemy);
 };
 
-//  спавн противника в определенное время
-setInterval(spawnEnemy, 1000);
+// спавним босса
+const spawnBoss = () => {
+  const margin = 100;
+
+  const side = Math.floor(Math.random() * 4);
+
+  let x = 0;
+  let y = 0;
+
+  if (side === 0) {
+    x = camera.x + Math.random() * canvas.width;
+    y = camera.y - margin;
+  }
+
+  if (side === 1) {
+    x = camera.x + canvas.width + margin;
+    y = camera.y + Math.random() * canvas.height;
+  }
+
+  if (side === 2) {
+    x = camera.x + Math.random() * canvas.width;
+    y = camera.y + canvas.height + margin;
+  }
+
+  if (side === 3) {
+    x = camera.x - margin;
+    y = camera.y + Math.random() * canvas.height;
+  }
+
+  const boss = createEnemy("boss", x, y);
+
+  const bossMultiplier = 1 + (wave - 1) * 0.5;
+
+  boss.hp = Math.ceil(boss.hp * bossMultiplier);
+
+  boss.maxHp = boss.hp;
+
+  boss.damage = Math.ceil(boss.damage * bossMultiplier);
+
+  boss.speed *= 1 + (wave - 1) * 0.05;
+
+  boss.xpValue = Math.ceil(boss.xpValue * bossMultiplier);
+
+  boss.bossDashCooldown = 3;
+
+  boss.bossDashWarning = 0;
+
+  enemies.push(boss);
+};
 
 // функция выбора перка при повышении уровня
 const selectUpgrade = (index: number) => {
@@ -643,6 +828,12 @@ const restartGame = () => {
   projectiles.length = 0;
   enemyProjectiles.length = 0;
   experienceOrbs.length = 0;
+
+  gameTime = 0;
+  kills = 0;
+  wave = 1;
+  spawnCooldown = 0;
+  bossSpawnedWave = 0;
 
   currentUpgrades = [];
 
