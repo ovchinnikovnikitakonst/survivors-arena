@@ -57,4 +57,21 @@ export type Upgrade = {
   apply: () => void;
 };
 
+export type WorldObjectType = "grass" | "rock" | "tree" | "car";
+
+export type WorldObject = {
+  type: WorldObjectType;
+
+  x: number;
+  y: number;
+
+  width: number;
+  height: number;
+
+  collisionWidth: number;
+  collisionHeight: number;
+
+  solid: boolean;
+};
+
 export type GameState = "playing" | "levelUp" | "gameOver";

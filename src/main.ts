@@ -8,6 +8,8 @@ import { updateEnemyMovement } from "./systems/enemyMovement";
 import { updateEnemyCombat } from "./systems/enemyCombat";
 import { sprites } from "./render/sprites";
 import { camera } from "./game/camera";
+import { renderWorld } from "./render/world";
+import { getNearbyWorldObjects } from "./world/generation";
 
 import type {
   Enemy,
@@ -117,8 +119,19 @@ const update = (deltaTime: number) => {
   player.velocityX = x * player.speed;
   player.velocityY = y * player.speed;
 
-  player.x += player.velocityX * deltaTime;
-  player.y += player.velocityY * deltaTime;
+  const nextX = player.x + player.velocityX * deltaTime;
+
+  const nextY = player.y + player.velocityY * deltaTime;
+
+  // движение по X
+  if (!collidesWithWorld(nextX, player.y)) {
+    player.x = nextX;
+  }
+
+  // движение по Y
+  if (!collidesWithWorld(player.x, nextY)) {
+    player.y = nextY;
+  }
 
   camera.x = player.x - canvas.width / 2;
   camera.y = player.y - canvas.height / 2;
@@ -301,8 +314,7 @@ const render = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // фон
-  ctx.fillStyle = "#111";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  renderWorld(ctx, canvas);
 
   // игрок
   const playerSize = player.radius * 2;
@@ -423,7 +435,11 @@ const render = () => {
   for (const projectile of enemyProjectiles) {
     ctx.beginPath();
 
-    ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+    const screenX = projectile.x - camera.x;
+
+    const screenY = projectile.y - camera.y;
+
+    ctx.arc(screenX, screenY, projectile.radius, 0, Math.PI * 2);
 
     ctx.fillStyle = "#ff4757";
     ctx.fill();
@@ -603,4 +619,37 @@ const selectUpgrade = (index: number) => {
   upgrade.apply();
 
   gameState = "playing";
+};
+
+const collidesWithWorld = (x: number, y: number) => {
+  const objects = getNearbyWorldObjects(x, y);
+
+  for (const object of objects) {
+    if (!object.solid) {
+      continue;
+    }
+
+    const left = object.x - object.collisionWidth / 2;
+
+    const right = object.x + object.collisionWidth / 2;
+
+    const top = object.y - object.collisionHeight / 2;
+
+    const bottom = object.y + object.collisionHeight / 2;
+
+    const closestX = Math.max(left, Math.min(x, right));
+
+    const closestY = Math.max(top, Math.min(y, bottom));
+
+    const dx = x - closestX;
+    const dy = y - closestY;
+
+    const distance = Math.hypot(dx, dy);
+
+    if (distance < player.radius) {
+      return true;
+    }
+  }
+
+  return false;
 };
