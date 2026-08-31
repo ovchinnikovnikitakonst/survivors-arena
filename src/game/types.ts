@@ -1,4 +1,4 @@
-export type EnemyType = "zombie" | "bat" | "brute";
+export type EnemyType = "zombie" | "bat" | "brute" | "shooter";
 
 export type Enemy = {
   type: EnemyType;
@@ -14,62 +14,9 @@ export type Enemy = {
 
   damage: number;
   xpValue: number;
-};
 
-import type { Enemy, EnemyType } from "../game/types";
-
-type EnemyConfig = {
-  radius: number;
-  speed: number;
-  hp: number;
-  damage: number;
-  xpValue: number;
-};
-
-const enemyConfigs: Record<EnemyType, EnemyConfig> = {
-  zombie: {
-    radius: 18,
-    speed: 100,
-    hp: 2,
-    damage: 10,
-    xpValue: 1,
-  },
-
-  bat: {
-    radius: 12,
-    speed: 180,
-    hp: 1,
-    damage: 5,
-    xpValue: 1,
-  },
-
-  brute: {
-    radius: 30,
-    speed: 60,
-    hp: 6,
-    damage: 25,
-    xpValue: 3,
-  },
-};
-
-export const createEnemy = (type: EnemyType, x: number, y: number): Enemy => {
-  const config = enemyConfigs[type];
-
-  return {
-    type,
-
-    x,
-    y,
-
-    radius: config.radius,
-    speed: config.speed,
-
-    hp: config.hp,
-    maxHp: config.hp,
-
-    damage: config.damage,
-    xpValue: config.xpValue,
-  };
+  shootCooldown?: number;
+  fireInterval?: number;
 };
 
 export type Projectile = {
@@ -79,6 +26,16 @@ export type Projectile = {
   speed: number;
   directionX: number;
   directionY: number;
+};
+
+export type EnemyProjectile = {
+  x: number;
+  y: number;
+  radius: number;
+  speed: number;
+  directionX: number;
+  directionY: number;
+  damage: number;
 };
 
 export type ExperienceOrb = {

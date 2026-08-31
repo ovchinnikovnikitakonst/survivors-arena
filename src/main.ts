@@ -4,11 +4,14 @@ import { player } from "./entities/player";
 import { weapon, shoot } from "./entities/weapon";
 import { getRandomUpgrades } from "./systems/upgrades";
 import { createEnemy } from "./entities/enemies";
+import { updateEnemyMovement } from "./systems/enemyMovement";
+import { updateEnemyCombat } from "./systems/enemyCombat";
 
 import type {
   Enemy,
   EnemyType,
   Projectile,
+  EnemyProjectile,
   ExperienceOrb,
   Upgrade,
   GameState,
@@ -47,6 +50,8 @@ const enemies: Enemy[] = [];
 const experienceOrbs: ExperienceOrb[] = [];
 // массив наших пуль
 const projectiles: Projectile[] = [];
+// массив врежеских пуль
+const enemyProjectiles: EnemyProjectile[] = [];
 
 const keys = new Set<string>();
 
@@ -112,19 +117,10 @@ const update = (deltaTime: number) => {
 
   // приближение врагов
   for (const enemy of enemies) {
-    const dx = player.x - enemy.x;
-    const dy = player.y - enemy.y;
+    updateEnemyMovement(enemy, deltaTime);
 
-    const distance = Math.hypot(dx, dy);
+    updateEnemyCombat(enemy, enemyProjectiles, deltaTime);
 
-    if (distance > 0) {
-      enemy.x += (dx / distance) * enemy.speed * deltaTime;
-      enemy.y += (dy / distance) * enemy.speed * deltaTime;
-    }
-  }
-
-  // СТОЛКНОВЕНИЕ!!!
-  for (const enemy of enemies) {
     const distance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
 
     if (distance < enemy.radius + player.radius && player.damageCooldown <= 0) {
@@ -132,7 +128,21 @@ const update = (deltaTime: number) => {
 
       player.damageCooldown = 0.75;
 
-      // проверка на проигрыш
+      if (enemy.type === "brute") {
+        const dx = player.x - enemy.x;
+        const dy = player.y - enemy.y;
+
+        const knockbackDistance = Math.hypot(dx, dy);
+
+        if (knockbackDistance > 0) {
+          const knockbackForce = 140;
+
+          player.x += (dx / knockbackDistance) * knockbackForce;
+
+          player.y += (dy / knockbackDistance) * knockbackForce;
+        }
+      }
+
       if (player.hp <= 0) {
         gameState = "gameOver";
       }
@@ -150,6 +160,12 @@ const update = (deltaTime: number) => {
 
   //  движение пули
   for (const projectile of projectiles) {
+    projectile.x += projectile.directionX * projectile.speed * deltaTime;
+
+    projectile.y += projectile.directionY * projectile.speed * deltaTime;
+  }
+
+  for (const projectile of enemyProjectiles) {
     projectile.x += projectile.directionX * projectile.speed * deltaTime;
 
     projectile.y += projectile.directionY * projectile.speed * deltaTime;
@@ -188,6 +204,29 @@ const update = (deltaTime: number) => {
         }
 
         break;
+      }
+    }
+  }
+  // попадание пули в игрока
+  for (
+    let projectileIndex = enemyProjectiles.length - 1;
+    projectileIndex >= 0;
+    projectileIndex--
+  ) {
+    const projectile = enemyProjectiles[projectileIndex];
+
+    const distance = Math.hypot(
+      projectile.x - player.x,
+      projectile.y - player.y,
+    );
+
+    if (distance < projectile.radius + player.radius) {
+      player.hp = Math.max(0, player.hp - projectile.damage);
+
+      enemyProjectiles.splice(projectileIndex, 1);
+
+      if (player.hp <= 0) {
+        gameState = "gameOver";
       }
     }
   }
@@ -254,7 +293,30 @@ const render = () => {
       ctx.fillStyle = "#e67e22";
     }
 
+    if (enemy.type === "shooter") {
+      ctx.fillStyle = "#3498db";
+    }
+
     ctx.fill();
+
+    if (enemy.hp < enemy.maxHp) {
+      const barWidth = enemy.radius * 2;
+      const barHeight = 5;
+
+      const healthPercent = enemy.hp / enemy.maxHp;
+
+      const barX = enemy.x - barWidth / 2;
+
+      const barY = enemy.y - enemy.radius - 10;
+
+      ctx.fillStyle = "#333";
+
+      ctx.fillRect(barX, barY, barWidth, barHeight);
+
+      ctx.fillStyle = "#2ecc71";
+
+      ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+    }
   }
 
   // отрисовка пуль
@@ -264,6 +326,16 @@ const render = () => {
     ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
 
     ctx.fillStyle = "#f1c40f";
+    ctx.fill();
+  }
+
+  // отписовка пуль противника
+  for (const projectile of enemyProjectiles) {
+    ctx.beginPath();
+
+    ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+
+    ctx.fillStyle = "#ff4757";
     ctx.fill();
   }
 
@@ -410,11 +482,11 @@ const spawnEnemy = () => {
 
   let enemyType: EnemyType = "zombie";
 
-  if (random < 0.2) {
+  if (random < 0.15) {
     enemyType = "bat";
-  }
-
-  if (random > 0.9) {
+  } else if (random < 0.25) {
+    enemyType = "shooter";
+  } else if (random < 0.35) {
     enemyType = "brute";
   }
 

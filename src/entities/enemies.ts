@@ -32,6 +32,14 @@ const enemyConfigs: Record<EnemyType, EnemyConfig> = {
     damage: 25,
     xpValue: 3,
   },
+
+  shooter: {
+    radius: 16,
+    speed: 80,
+    hp: 3,
+    damage: 8,
+    xpValue: 2,
+  },
 };
 
 export const createEnemy = (type: EnemyType, x: number, y: number): Enemy => {
@@ -51,5 +59,9 @@ export const createEnemy = (type: EnemyType, x: number, y: number): Enemy => {
 
     damage: config.damage,
     xpValue: config.xpValue,
+
+    shootCooldown: type === "shooter" ? 0 : undefined,
+
+    fireInterval: type === "shooter" ? 1.5 : undefined,
   };
 };
