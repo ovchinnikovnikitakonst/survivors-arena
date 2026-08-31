@@ -1,7 +1,7 @@
 import "./style.css";
 
-import { player } from "./entities/player";
-import { weapon, shoot } from "./entities/weapon";
+import { player, resetPlayer } from "./entities/player";
+import { weapon, shoot, resetWeapon } from "./entities/weapon";
 import { getRandomUpgrades } from "./systems/upgrades";
 import { createEnemy } from "./entities/enemies";
 import { updateEnemyMovement } from "./systems/enemyMovement";
@@ -60,6 +60,11 @@ const enemyProjectiles: EnemyProjectile[] = [];
 const keys = new Set<string>();
 
 window.addEventListener("keydown", (event) => {
+  if (gameState === "gameOver" && event.code === "KeyR") {
+    restartGame();
+    return;
+  }
+
   if (gameState === "levelUp") {
     // выбор перка
     if (event.code === "Digit1") {
@@ -457,6 +462,14 @@ const render = () => {
     ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
 
     ctx.textAlign = "start";
+
+    ctx.font = "24px Arial";
+
+    ctx.fillText(
+      "Press R to restart",
+      canvas.width / 2,
+      canvas.height / 2 + 50,
+    );
   }
 
   // полоса hp
@@ -617,6 +630,28 @@ const selectUpgrade = (index: number) => {
   }
 
   upgrade.apply();
+
+  gameState = "playing";
+};
+
+// рестарт игры
+const restartGame = () => {
+  resetPlayer();
+  resetWeapon();
+
+  enemies.length = 0;
+  projectiles.length = 0;
+  enemyProjectiles.length = 0;
+  experienceOrbs.length = 0;
+
+  currentUpgrades = [];
+
+  camera.x = 0;
+  camera.y = 0;
+
+  keys.clear();
+
+  previousTime = performance.now();
 
   gameState = "playing";
 };

@@ -1,12 +1,20 @@
 import type { Enemy, Projectile } from "../game/types";
 import { player } from "./player";
 
-export const weapon = {
+const DEFAULT_WEAPON = {
   projectileSpeed: 500,
   projectileRadius: 6,
   fireInterval: 0.5,
   shootCooldown: 0,
   projectileCount: 1,
+};
+
+export const weapon = {
+  ...DEFAULT_WEAPON,
+};
+
+export const resetWeapon = () => {
+  Object.assign(weapon, DEFAULT_WEAPON);
 };
 
 export const shoot = (enemies: Enemy[], projectiles: Projectile[]) => {

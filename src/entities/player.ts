@@ -1,4 +1,4 @@
-export const player = {
+const DEFAULT_PLAYER = {
   x: 0,
   y: 0,
 
@@ -16,4 +16,12 @@ export const player = {
   level: 1,
   xp: 0,
   xpToNextLevel: 5,
+};
+
+export const player = {
+  ...DEFAULT_PLAYER,
+};
+
+export const resetPlayer = () => {
+  Object.assign(player, DEFAULT_PLAYER);
 };
