@@ -29,6 +29,8 @@ export type Projectile = {
   speed: number;
   directionX: number;
   directionY: number;
+  velocityX: number;
+  velocityY: number;
 };
 
 export type EnemyProjectile = {

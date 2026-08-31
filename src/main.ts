@@ -7,6 +7,7 @@ import { createEnemy } from "./entities/enemies";
 import { updateEnemyMovement } from "./systems/enemyMovement";
 import { updateEnemyCombat } from "./systems/enemyCombat";
 import { sprites } from "./render/sprites";
+import { camera } from "./game/camera";
 
 import type {
   Enemy,
@@ -113,8 +114,14 @@ const update = (deltaTime: number) => {
     y /= length;
   }
 
-  player.x += x * player.speed * deltaTime;
-  player.y += y * player.speed * deltaTime;
+  player.velocityX = x * player.speed;
+  player.velocityY = y * player.speed;
+
+  player.x += player.velocityX * deltaTime;
+  player.y += player.velocityY * deltaTime;
+
+  camera.x = player.x - canvas.width / 2;
+  camera.y = player.y - canvas.height / 2;
 
   // приближение врагов
   for (const enemy of enemies) {
@@ -165,9 +172,9 @@ const update = (deltaTime: number) => {
 
   //  движение пули
   for (const projectile of projectiles) {
-    projectile.x += projectile.directionX * projectile.speed * deltaTime;
+    projectile.x += projectile.velocityX * deltaTime;
 
-    projectile.y += projectile.directionY * projectile.speed * deltaTime;
+    projectile.y += projectile.velocityY * deltaTime;
   }
 
   for (const projectile of enemyProjectiles) {
@@ -300,23 +307,29 @@ const render = () => {
   // игрок
   const playerSize = player.radius * 2;
 
+  const playerScreenX = player.x - camera.x;
+  const playerScreenY = player.y - camera.y;
+
   ctx.drawImage(
     sprites.player,
-    player.x - playerSize / 2,
-    player.y - playerSize / 2,
+    playerScreenX - playerSize / 2,
+    playerScreenY - playerSize / 2,
     playerSize,
     playerSize,
   );
 
   // отрисовка противника
   for (const enemy of enemies) {
+    const screenX = enemy.x - camera.x;
+    const screenY = enemy.y - camera.y;
+
     if (enemy.type === "zombie") {
       ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : 1;
 
       ctx.drawImage(
         sprites.zombie,
-        enemy.x - enemy.spriteSize / 2,
-        enemy.y - enemy.spriteSize / 2,
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
         enemy.spriteSize,
         enemy.spriteSize,
       );
@@ -338,8 +351,8 @@ const render = () => {
         frameWidth,
         frameHeight,
 
-        enemy.x - enemy.spriteSize / 2,
-        enemy.y - enemy.spriteSize / 2,
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
         enemy.spriteSize,
         enemy.spriteSize,
       );
@@ -350,8 +363,8 @@ const render = () => {
 
       ctx.drawImage(
         sprites.brute,
-        enemy.x - enemy.spriteSize / 2,
-        enemy.y - enemy.spriteSize / 2,
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
         enemy.spriteSize,
         enemy.spriteSize,
       );
@@ -362,8 +375,8 @@ const render = () => {
 
       ctx.drawImage(
         sprites.shooter,
-        enemy.x - enemy.spriteSize / 2,
-        enemy.y - enemy.spriteSize / 2,
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
         enemy.spriteSize,
         enemy.spriteSize,
       );
@@ -378,9 +391,9 @@ const render = () => {
 
       const healthPercent = enemy.hp / enemy.maxHp;
 
-      const barX = enemy.x - barWidth / 2;
+      const barX = screenX - barWidth / 2;
 
-      const barY = enemy.y - enemy.spriteSize / 2 - 8;
+      const barY = screenY - enemy.spriteSize / 2 - 8;
 
       ctx.fillStyle = "#333";
 
@@ -394,9 +407,13 @@ const render = () => {
 
   // отрисовка пуль
   for (const projectile of projectiles) {
+    const screenX = projectile.x - camera.x;
+
+    const screenY = projectile.y - camera.y;
+
     ctx.beginPath();
 
-    ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+    ctx.arc(screenX, screenY, projectile.radius, 0, Math.PI * 2);
 
     ctx.fillStyle = "#f1c40f";
     ctx.fill();
@@ -459,7 +476,16 @@ const render = () => {
   for (const orb of experienceOrbs) {
     const size = orb.radius * 3;
 
-    ctx.drawImage(sprites.xp, orb.x - size / 2, orb.y - size / 2, size, size);
+    const screenX = orb.x - camera.x;
+    const screenY = orb.y - camera.y;
+
+    ctx.drawImage(
+      sprites.xp,
+      screenX - size / 2,
+      screenY - size / 2,
+      size,
+      size,
+    );
   }
 
   // полоса опыта

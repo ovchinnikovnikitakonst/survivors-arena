@@ -5,6 +5,9 @@ export const player = {
   radius: 25,
   speed: 300,
 
+  velocityX: 0,
+  velocityY: 0,
+
   hp: 100,
   maxHp: 100,
 

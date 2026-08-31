@@ -39,10 +39,16 @@ export const shoot = (enemies: Enemy[], projectiles: Projectile[]) => {
     projectiles.push({
       x: player.x,
       y: player.y,
+
       radius: weapon.projectileRadius,
       speed: weapon.projectileSpeed,
+
       directionX,
       directionY,
+
+      velocityX: directionX * weapon.projectileSpeed + player.velocityX,
+
+      velocityY: directionY * weapon.projectileSpeed + player.velocityY,
     });
   }
 };
