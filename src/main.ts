@@ -3,17 +3,17 @@ import "./style.css";
 import { player, resetPlayer } from "./entities/player";
 import { weapon, shoot, resetWeapon } from "./entities/weapon";
 import { getRandomUpgrades } from "./systems/upgrades";
-import { createEnemy } from "./entities/enemies";
-import { updateEnemyMovement } from "./systems/enemyMovement";
-import { updateEnemyCombat } from "./systems/enemyCombat";
 import { sprites } from "./render/sprites";
 import { camera } from "./game/camera";
 import { renderWorld } from "./render/world";
-import { getNearbyWorldObjects } from "./world/generation";
+import { updatePlayerMovement } from "./systems/playerMovement";
+import { updateProjectiles } from "./systems/projectileSystem";
+import { updateEnemies } from "./systems/enemySystem";
+import { updateSpawnSystem } from "./systems/spawnSystem";
+import { updateExperience } from "./systems/experienceSystem";
 
 import type {
   Enemy,
-  EnemyType,
   Projectile,
   EnemyProjectile,
   ExperienceOrb,
@@ -97,132 +97,49 @@ window.addEventListener("keyup", (event) => {
 let previousTime = performance.now();
 
 const update = (deltaTime: number) => {
-  // проипали
   if (player.hp <= 0) {
     return;
   }
-  // проверка в каком состоянии игра
+
   if (gameState !== "playing") {
     return;
   }
-  // учет времени игры
+
   gameTime += deltaTime;
 
-  // босс под конец каждой волны
-  wave = Math.floor(gameTime / 30) + 1;
+  const spawnState = updateSpawnSystem({
+    enemies,
+    canvas,
+    deltaTime,
+    gameTime,
+    wave,
+    spawnCooldown,
+    bossSpawnedWave,
+  });
 
-  const timeInWave = gameTime % 30;
+  wave = spawnState.wave;
+  spawnCooldown = spawnState.spawnCooldown;
+  bossSpawnedWave = spawnState.bossSpawnedWave;
 
-  if (timeInWave >= 25 && bossSpawnedWave !== wave) {
-    spawnBoss();
-
-    bossSpawnedWave = wave;
-  }
-
-  // уменьшаем количество времени спавна
-  spawnCooldown -= deltaTime;
-
-  const spawnInterval = Math.max(0.25, 1 - (wave - 1) * 0.1);
-
-  if (spawnCooldown <= 0) {
-    spawnEnemy();
-
-    spawnCooldown = spawnInterval;
-  }
-
-  // уменьшение кд урона по игроку
   if (player.damageCooldown > 0) {
     player.damageCooldown -= deltaTime;
   }
-  // движение игрока
-  let x = 0;
-  let y = 0;
 
-  if (keys.has("KeyW")) y -= 1;
-  if (keys.has("KeyS")) y += 1;
-  if (keys.has("KeyA")) x -= 1;
-  if (keys.has("KeyD")) x += 1;
-
-  const length = Math.hypot(x, y);
-
-  if (length > 0) {
-    x /= length;
-    y /= length;
-  }
-
-  player.velocityX = x * player.speed;
-  player.velocityY = y * player.speed;
-
-  const nextX = player.x + player.velocityX * deltaTime;
-
-  const nextY = player.y + player.velocityY * deltaTime;
-
-  // движение по X
-  if (!collidesWithWorld(nextX, player.y)) {
-    player.x = nextX;
-  }
-
-  // движение по Y
-  if (!collidesWithWorld(player.x, nextY)) {
-    player.y = nextY;
-  }
+  updatePlayerMovement(keys, deltaTime);
 
   camera.x = player.x - canvas.width / 2;
   camera.y = player.y - canvas.height / 2;
 
-  // приближение врагов
-  for (const enemy of enemies) {
-    if (enemy.isDying) {
-      enemy.deathAnimationTime = (enemy.deathAnimationTime ?? 0) + deltaTime;
+  updateEnemies({
+    enemies,
+    enemyProjectiles,
+    deltaTime,
 
-      continue;
-    }
+    onPlayerDeath: () => {
+      gameState = "gameOver";
+    },
+  });
 
-    if (enemy.hitFlash > 0) {
-      enemy.hitFlash -= deltaTime;
-    }
-
-    updateEnemyMovement(enemy, deltaTime);
-
-    updateEnemyCombat(enemy, enemyProjectiles, deltaTime);
-
-    const distance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
-
-    if (distance < enemy.radius + player.radius && player.damageCooldown <= 0) {
-      player.hp = Math.max(0, player.hp - enemy.damage);
-
-      player.damageCooldown = 0.75;
-
-      if (enemy.type === "brute") {
-        const dx = player.x - enemy.x;
-        const dy = player.y - enemy.y;
-
-        const knockbackDistance = Math.hypot(dx, dy);
-
-        if (knockbackDistance > 0) {
-          const knockbackForce = 140;
-
-          player.x += (dx / knockbackDistance) * knockbackForce;
-
-          player.y += (dy / knockbackDistance) * knockbackForce;
-        }
-      }
-
-      if (player.hp <= 0) {
-        gameState = "gameOver";
-      }
-    }
-  }
-
-  for (let enemyIndex = enemies.length - 1; enemyIndex >= 0; enemyIndex--) {
-    const enemy = enemies[enemyIndex];
-
-    if (enemy.isDying && (enemy.deathAnimationTime ?? 0) >= 1.5) {
-      enemies.splice(enemyIndex, 1);
-    }
-  }
-
-  // выстрел
   weapon.shootCooldown -= deltaTime;
 
   if (weapon.shootCooldown <= 0) {
@@ -231,138 +148,32 @@ const update = (deltaTime: number) => {
     weapon.shootCooldown = weapon.fireInterval;
   }
 
-  //  движение пули
-  for (const projectile of projectiles) {
-    projectile.x += projectile.velocityX * deltaTime;
+  updateProjectiles({
+    projectiles,
+    enemyProjectiles,
+    enemies,
+    experienceOrbs,
+    deltaTime,
 
-    projectile.y += projectile.velocityY * deltaTime;
-  }
+    onEnemyKilled: () => {
+      kills += 1;
+    },
 
-  for (const projectile of enemyProjectiles) {
-    projectile.x += projectile.directionX * projectile.speed * deltaTime;
+    onPlayerDeath: () => {
+      gameState = "gameOver";
+    },
+  });
 
-    projectile.y += projectile.directionY * projectile.speed * deltaTime;
-  }
+  updateExperience({
+    experienceOrbs,
+    deltaTime,
 
-  // попадание пули в противника
-  for (
-    let projectileIndex = projectiles.length - 1;
-    projectileIndex >= 0;
-    projectileIndex--
-  ) {
-    const projectile = projectiles[projectileIndex];
+    onLevelUp: () => {
+      currentUpgrades = getRandomUpgrades(3);
 
-    for (let enemyIndex = enemies.length - 1; enemyIndex >= 0; enemyIndex--) {
-      const enemy = enemies[enemyIndex];
-
-      const distance = Math.hypot(
-        projectile.x - enemy.x,
-        projectile.y - enemy.y,
-      );
-
-      if (distance < projectile.radius + enemy.radius) {
-        enemy.hp -= 1;
-
-        enemy.hitFlash = 0.12;
-
-        const knockbackForce = 12;
-
-        enemy.x += projectile.directionX * knockbackForce;
-        enemy.y += projectile.directionY * knockbackForce;
-
-        projectiles.splice(projectileIndex, 1);
-
-        if (enemy.hp <= 0) {
-          kills += 1;
-
-          experienceOrbs.push({
-            x: enemy.x,
-            y: enemy.y,
-            radius: 8,
-            value: enemy.xpValue,
-            magnetRadius: 120,
-          });
-
-          if (enemy.type === "boss") {
-            enemy.isDying = true;
-            enemy.deathAnimationTime = 0;
-          } else {
-            enemies.splice(enemyIndex, 1);
-          }
-        }
-
-        break;
-      }
-    }
-  }
-  // попадание пули в игрока
-  for (
-    let projectileIndex = enemyProjectiles.length - 1;
-    projectileIndex >= 0;
-    projectileIndex--
-  ) {
-    const projectile = enemyProjectiles[projectileIndex];
-
-    const distance = Math.hypot(
-      projectile.x - player.x,
-      projectile.y - player.y,
-    );
-
-    if (distance < projectile.radius + player.radius) {
-      player.hp = Math.max(0, player.hp - projectile.damage);
-
-      enemyProjectiles.splice(projectileIndex, 1);
-
-      if (player.hp <= 0) {
-        gameState = "gameOver";
-      }
-    }
-  }
-
-  // сбор опыта
-  for (let orbIndex = experienceOrbs.length - 1; orbIndex >= 0; orbIndex--) {
-    const orb = experienceOrbs[orbIndex];
-
-    const dx = player.x - orb.x;
-    const dy = player.y - orb.y;
-
-    const distance = Math.hypot(dx, dy);
-
-    // полет опыта к игроку
-    if (distance < orb.magnetRadius && distance > 0) {
-      const magnetSpeed = 350;
-
-      orb.x += (dx / distance) * magnetSpeed * deltaTime;
-
-      orb.y += (dy / distance) * magnetSpeed * deltaTime;
-    }
-
-    // пересчет расстояния
-    const pickupDistance = Math.hypot(orb.x - player.x, orb.y - player.y);
-
-    // подбор опыта
-    if (pickupDistance < orb.radius + player.radius) {
-      player.xp += orb.value;
-
-      // удаляем собранный опыт из массива
-      experienceOrbs.splice(orbIndex, 1);
-
-      // чекаем на повышение ЛВЛа
-      if (player.xp >= player.xpToNextLevel) {
-        player.xp -= player.xpToNextLevel;
-
-        player.level += 1;
-
-        // увеличиваем колво опыта для некст ЛВЛа
-        player.xpToNextLevel = Math.floor(player.xpToNextLevel * 1.5);
-
-        // выбираем случайные перки на выбор
-        currentUpgrades = getRandomUpgrades(3);
-
-        gameState = "levelUp";
-      }
-    }
-  }
+      gameState = "levelUp";
+    },
+  });
 };
 
 const render = () => {
@@ -684,128 +495,6 @@ const gameLoop = (currentTime: number) => {
 
 requestAnimationFrame(gameLoop);
 
-// функция спавн противника
-const spawnEnemy = () => {
-  const side = Math.floor(Math.random() * 4);
-
-  const margin = 50;
-
-  let x = 0;
-  let y = 0;
-
-  if (side === 0) {
-    x = camera.x + Math.random() * canvas.width;
-    y = camera.y - margin;
-  }
-
-  if (side === 1) {
-    x = camera.x + canvas.width + margin;
-    y = camera.y + Math.random() * canvas.height;
-  }
-
-  if (side === 2) {
-    x = camera.x + Math.random() * canvas.width;
-    y = camera.y + canvas.height + margin;
-  }
-
-  if (side === 3) {
-    x = camera.x - margin;
-    y = camera.y + Math.random() * canvas.height;
-  }
-
-  const random = Math.random();
-
-  let enemyType: EnemyType = "zombie";
-
-  if (wave === 1) {
-    if (random < 0.2) {
-      enemyType = "bat";
-    }
-  }
-
-  if (wave === 2) {
-    if (random < 0.2) {
-      enemyType = "bat";
-    } else if (random < 0.3) {
-      enemyType = "shooter";
-    }
-  }
-
-  if (wave >= 3) {
-    if (random < 0.2) {
-      enemyType = "bat";
-    } else if (random < 0.35) {
-      enemyType = "shooter";
-    } else if (random < 0.5) {
-      enemyType = "brute";
-    }
-  }
-
-  const enemy = createEnemy(enemyType, x, y);
-
-  const difficultyMultiplier = 1 + (wave - 1) * 0.15;
-
-  enemy.hp = Math.ceil(enemy.hp * difficultyMultiplier);
-
-  enemy.maxHp = enemy.hp;
-
-  enemy.damage = Math.ceil(enemy.damage * difficultyMultiplier);
-
-  enemy.speed *= 1 + (wave - 1) * 0.03;
-
-  enemies.push(enemy);
-};
-
-// спавним босса
-const spawnBoss = () => {
-  const margin = 100;
-
-  const side = Math.floor(Math.random() * 4);
-
-  let x = 0;
-  let y = 0;
-
-  if (side === 0) {
-    x = camera.x + Math.random() * canvas.width;
-    y = camera.y - margin;
-  }
-
-  if (side === 1) {
-    x = camera.x + canvas.width + margin;
-    y = camera.y + Math.random() * canvas.height;
-  }
-
-  if (side === 2) {
-    x = camera.x + Math.random() * canvas.width;
-    y = camera.y + canvas.height + margin;
-  }
-
-  if (side === 3) {
-    x = camera.x - margin;
-    y = camera.y + Math.random() * canvas.height;
-  }
-
-  const boss = createEnemy("boss", x, y);
-
-  const bossMultiplier = 1 + (wave - 1) * 0.5;
-
-  boss.hp = Math.ceil(boss.hp * bossMultiplier);
-
-  boss.maxHp = boss.hp;
-
-  boss.damage = Math.ceil(boss.damage * bossMultiplier);
-
-  boss.speed *= 1 + (wave - 1) * 0.05;
-
-  boss.xpValue = Math.ceil(boss.xpValue * bossMultiplier);
-
-  boss.bossDashCooldown = 3;
-
-  boss.bossDashWarning = 0;
-
-  enemies.push(boss);
-};
-
 // функция выбора перка при повышении уровня
 const selectUpgrade = (index: number) => {
   const upgrade = currentUpgrades[index];
@@ -845,37 +534,4 @@ const restartGame = () => {
   previousTime = performance.now();
 
   gameState = "playing";
-};
-
-const collidesWithWorld = (x: number, y: number) => {
-  const objects = getNearbyWorldObjects(x, y);
-
-  for (const object of objects) {
-    if (!object.solid) {
-      continue;
-    }
-
-    const left = object.x - object.collisionWidth / 2;
-
-    const right = object.x + object.collisionWidth / 2;
-
-    const top = object.y - object.collisionHeight / 2;
-
-    const bottom = object.y + object.collisionHeight / 2;
-
-    const closestX = Math.max(left, Math.min(x, right));
-
-    const closestY = Math.max(top, Math.min(y, bottom));
-
-    const dx = x - closestX;
-    const dy = y - closestY;
-
-    const distance = Math.hypot(dx, dy);
-
-    if (distance < player.radius) {
-      return true;
-    }
-  }
-
-  return false;
 };
