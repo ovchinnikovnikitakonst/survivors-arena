@@ -34,6 +34,47 @@ export const updateEnemies = ({
 
     const distance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
 
+    if (enemy.type === "zombie") {
+      const attackDistance = enemy.radius + player.radius + 30;
+
+      if (distance > attackDistance) {
+        enemy.attackAnimationTime = 0;
+        enemy.hasDealtAttackDamage = false;
+
+        continue;
+      }
+
+      const frameDuration = 0.07;
+      const damageFrame = 10;
+      const frameCount = 20;
+
+      const damageTime = damageFrame * frameDuration;
+
+      const animationDuration = frameCount * frameDuration;
+
+      enemy.attackAnimationTime = (enemy.attackAnimationTime ?? 0) + deltaTime;
+
+      if (
+        enemy.attackAnimationTime >= damageTime &&
+        !enemy.hasDealtAttackDamage
+      ) {
+        player.hp = Math.max(0, player.hp - enemy.damage);
+
+        enemy.hasDealtAttackDamage = true;
+
+        if (player.hp <= 0) {
+          onPlayerDeath();
+        }
+      }
+
+      if (enemy.attackAnimationTime >= animationDuration) {
+        enemy.attackAnimationTime = 0;
+        enemy.hasDealtAttackDamage = false;
+      }
+
+      continue;
+    }
+
     if (distance >= enemy.radius + player.radius || player.damageCooldown > 0) {
       continue;
     }

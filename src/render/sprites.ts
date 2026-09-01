@@ -24,7 +24,16 @@ export const sprites = {
       `/sprites/player/handgun-shoot/survivor-shoot_handgun_${index}.png`,
     ),
   ),
-  player: loadImage("/sprites/player.png"),
+
+  zombieAttack: Array.from({ length: 20 }, (_, index) =>
+    loadImage(
+      `/sprites/zombie/attack/attack01_${String(index).padStart(4, "0")}.png`,
+    ),
+  ),
+
+  zombieWalk: Array.from({ length: 32 }, (_, index) =>
+    loadImage(`/sprites/zombie/walk/walk${String(index).padStart(4, "0")}.png`),
+  ),
   zombie: loadImage("/sprites/zombie.png"),
   bat: loadImage("/sprites/bat.png"),
   brute: loadImage("/sprites/brute.png"),

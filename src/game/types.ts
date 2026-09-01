@@ -26,6 +26,9 @@ export type Enemy = {
 
   isDying?: boolean;
   deathAnimationTime?: number;
+
+  attackAnimationTime?: number;
+  hasDealtAttackDamage?: boolean;
 };
 
 export type Projectile = {

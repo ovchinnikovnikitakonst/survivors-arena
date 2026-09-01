@@ -15,6 +15,12 @@ export const updateEnemyMovement = (enemy: Enemy, deltaTime: number) => {
   const directionY = dy / distance;
 
   if (enemy.type === "zombie") {
+    const attackDistance = enemy.radius + player.radius + 15;
+
+    if (distance <= attackDistance) {
+      return;
+    }
+
     enemy.x += directionX * enemy.speed * deltaTime;
 
     enemy.y += directionY * enemy.speed * deltaTime;

@@ -12,7 +12,7 @@ type EnemyConfig = {
 const enemyConfigs: Record<EnemyType, EnemyConfig> = {
   zombie: {
     radius: 18,
-    spriteSize: 48,
+    spriteSize: 220,
     speed: 100,
     hp: 2,
     damage: 10,
@@ -83,5 +83,9 @@ export const createEnemy = (type: EnemyType, x: number, y: number): Enemy => {
     shootCooldown: type === "shooter" ? 0 : undefined,
 
     fireInterval: type === "shooter" ? 1.5 : undefined,
+
+    attackAnimationTime: type === "zombie" ? 0 : undefined,
+
+    hasDealtAttackDamage: type === "zombie" ? false : undefined,
   };
 };
