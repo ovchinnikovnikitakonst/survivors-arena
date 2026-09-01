@@ -2,6 +2,7 @@ import { player } from "../entities/player";
 import { camera } from "../game/camera";
 import { sprites } from "./sprites";
 import { drawImageRotated } from "./utils";
+import { weapon } from "../entities/weapon";
 
 export const renderPlayer = (ctx: CanvasRenderingContext2D) => {
   const playerSize = player.radius * 2;
@@ -13,16 +14,18 @@ export const renderPlayer = (ctx: CanvasRenderingContext2D) => {
 
   const isShooting = player.shootAnimationTime > 0;
 
-  let frames = sprites.playerIdle;
+  const weaponSprites = sprites.player[weapon.type];
+
+  let frames = weaponSprites.idle;
   let frameDuration = 120;
 
   if (isMoving) {
-    frames = sprites.playerMove;
+    frames = weaponSprites.move;
     frameDuration = 70;
   }
 
   if (isShooting) {
-    frames = sprites.playerShoot;
+    frames = weaponSprites.shoot;
     frameDuration = 50;
   }
 

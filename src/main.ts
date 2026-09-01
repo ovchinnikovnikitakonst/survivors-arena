@@ -1,7 +1,7 @@
 import "./style.css";
 
 import { player, resetPlayer } from "./entities/player";
-import { weapon, shoot, resetWeapon } from "./entities/weapon";
+import { weapon, shoot, resetWeapon, setWeapon } from "./entities/weapon";
 import { getRandomUpgrades } from "./systems/upgrades";
 import { camera } from "./game/camera";
 import { renderWorld } from "./render/world";
@@ -73,11 +73,35 @@ const hitEffects: HitEffect[] = [];
 
 const keys = new Set<string>();
 
+let mouseX = canvas.width / 2 + 100;
+let mouseY = canvas.height / 2;
+
+canvas.addEventListener("mousemove", (event) => {
+  const rect = canvas.getBoundingClientRect();
+
+  mouseX = (event.clientX - rect.left) * (canvas.width / rect.width);
+  mouseY = (event.clientY - rect.top) * (canvas.height / rect.height);
+});
+
 window.addEventListener("keydown", (event) => {
   void playBackgroundMusic();
   if (gameState === "gameOver" && event.code === "KeyR") {
     restartGame();
     return;
+  }
+
+  if (gameState === "playing") {
+    if (event.code === "Digit1") {
+      setWeapon("pistol");
+    }
+
+    if (event.code === "Digit2") {
+      setWeapon("shotgun");
+    }
+
+    if (event.code === "Digit3") {
+      setWeapon("rifle");
+    }
   }
 
   if (gameState === "levelUp") {
@@ -144,6 +168,16 @@ const update = (deltaTime: number) => {
   camera.x = player.x - canvas.width / 2;
   camera.y = player.y - canvas.height / 2;
 
+  const aimX = camera.x + mouseX;
+  const aimY = camera.y + mouseY;
+
+  const aimDx = aimX - player.x;
+  const aimDy = aimY - player.y;
+
+  if (aimDx !== 0 || aimDy !== 0) {
+    player.facingAngle = Math.atan2(aimDy, aimDx);
+  }
+
   updateEnemies({
     enemies,
     enemyProjectiles,
@@ -157,7 +191,7 @@ const update = (deltaTime: number) => {
   weapon.shootCooldown -= deltaTime;
 
   if (weapon.shootCooldown <= 0) {
-    shoot(enemies, projectiles);
+    shoot(projectiles, aimX, aimY);
 
     weapon.shootCooldown = weapon.fireInterval;
   }

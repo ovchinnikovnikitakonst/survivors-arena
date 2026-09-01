@@ -23,9 +23,9 @@ const upgrades: Upgrade[] = [
 
   {
     name: "Heal",
-    description: "Restore 30 HP",
+    description: "Restore 40 HP",
     apply: () => {
-      player.hp = Math.min(player.maxHp, player.hp + 30);
+      player.hp = Math.min(player.maxHp, player.hp + 40);
     },
   },
 
@@ -46,26 +46,10 @@ const upgrades: Upgrade[] = [
   },
 
   {
-    name: "Huge Heal",
-    description: "Restore 60 HP",
-    apply: () => {
-      player.hp = Math.min(player.maxHp, player.hp + 60);
-    },
-  },
-
-  {
     name: "Rapid Fire",
     description: "+20% attack speed",
     apply: () => {
       weapon.fireInterval = Math.max(0.1, weapon.fireInterval * 0.8);
-    },
-  },
-
-  {
-    name: "Multi Shot",
-    description: "+1 projectile",
-    apply: () => {
-      weapon.projectileCount += 1;
     },
   },
 

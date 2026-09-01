@@ -1,33 +1,90 @@
-import type { Enemy, Projectile } from "../game/types";
+import type { Projectile, WeaponType } from "../game/types";
 import { player } from "./player";
 import { playShootSound } from "../audio/audio";
 
-const DEFAULT_WEAPON = {
-  projectileSpeed: 500,
-  projectileRadius: 6,
-  projectileDamage: 1,
+type Weapon = {
+  type: WeaponType;
+  shootCooldown: number;
 
-  fireInterval: 0.5,
-  shootCooldown: 0,
+  projectileSpeed: number;
+  projectileRadius: number;
+  projectileDamage: number;
+  projectilePierce: number;
 
-  projectileCount: 1,
+  projectileCount: number;
+  spread: number;
 
-  projectilePierce: 0,
+  fireInterval: number;
 };
 
-export const weapon = {
-  ...DEFAULT_WEAPON,
+type WeaponConfig = Omit<Weapon, "type" | "shootCooldown">;
+
+const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
+  pistol: {
+    projectileSpeed: 500,
+    projectileRadius: 6,
+    projectileDamage: 1,
+    projectilePierce: 0,
+    projectileCount: 1,
+    spread: 0.03,
+    fireInterval: 0.5,
+  },
+
+  shotgun: {
+    projectileSpeed: 450,
+    projectileRadius: 6,
+    projectileDamage: 1,
+    projectilePierce: 0,
+    projectileCount: 6,
+    spread: 0.16,
+    fireInterval: 0.9,
+  },
+
+  rifle: {
+    projectileSpeed: 650,
+    projectileRadius: 5,
+    projectileDamage: 1,
+    projectilePierce: 0,
+    projectileCount: 1,
+    spread: 0.04,
+    fireInterval: 0.18,
+  },
+};
+
+const DEFAULT_WEAPON_TYPE: WeaponType = "pistol";
+
+export const weapon: Weapon = {
+  type: DEFAULT_WEAPON_TYPE,
+  shootCooldown: 0,
+
+  ...WEAPON_CONFIGS[DEFAULT_WEAPON_TYPE],
+};
+
+export const setWeapon = (type: WeaponType) => {
+  weapon.type = type;
+
+  Object.assign(weapon, WEAPON_CONFIGS[type]);
+
+  weapon.shootCooldown = 0;
 };
 
 export const resetWeapon = () => {
-  Object.assign(weapon, DEFAULT_WEAPON);
+  setWeapon(DEFAULT_WEAPON_TYPE);
 };
 
-export const shoot = (enemies: Enemy[], projectiles: Projectile[]) => {
+export const shoot = (
+  projectiles: Projectile[],
+  aimX: number,
+  aimY: number,
+) => {
   const muzzleOffset = player.radius + 8;
-  const target = getNearestEnemy(enemies);
 
-  if (!target) {
+  const dx = aimX - player.x;
+  const dy = aimY - player.y;
+
+  const distance = Math.hypot(dx, dy);
+
+  if (distance === 0) {
     return;
   }
 
@@ -35,12 +92,7 @@ export const shoot = (enemies: Enemy[], projectiles: Projectile[]) => {
 
   player.shootAnimationTime = 0.15;
 
-  const dx = target.x - player.x;
-  const dy = target.y - player.y;
-
   player.facingAngle = Math.atan2(dy, dx);
-
-  const distance = Math.hypot(dx, dy);
 
   const baseDirectionX = dx / distance;
   const baseDirectionY = dy / distance;
@@ -77,24 +129,4 @@ export const shoot = (enemies: Enemy[], projectiles: Projectile[]) => {
       pierce: weapon.projectilePierce,
     });
   }
-};
-
-const getNearestEnemy = (enemies: Enemy[]): Enemy | null => {
-  let nearestEnemy: Enemy | null = null;
-  let nearestDistance = Infinity;
-
-  for (const enemy of enemies) {
-    if (enemy.isDying) {
-      continue;
-    }
-
-    const distance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
-
-    if (distance < nearestDistance) {
-      nearestDistance = distance;
-      nearestEnemy = enemy;
-    }
-  }
-
-  return nearestEnemy;
 };

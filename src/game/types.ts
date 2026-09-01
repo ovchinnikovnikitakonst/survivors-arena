@@ -110,3 +110,5 @@ export type WorldObject = {
 };
 
 export type GameState = "playing" | "levelUp" | "gameOver";
+
+export type WeaponType = "pistol" | "shotgun" | "rifle";

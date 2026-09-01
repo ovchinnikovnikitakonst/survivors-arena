@@ -1,4 +1,5 @@
 import { player } from "../entities/player";
+import { weapon } from "../entities/weapon";
 
 type RenderHudParams = {
   ctx: CanvasRenderingContext2D;
@@ -17,6 +18,7 @@ export const renderHud = ({
 }: RenderHudParams) => {
   renderHealthBar(ctx);
   renderStats(ctx, gameTime, kills, wave);
+  renderWeapons(ctx, canvas);
   renderExperienceBar(ctx, canvas);
 };
 
@@ -54,7 +56,6 @@ const renderStats = (
   ctx.fillText(`XP: ${player.xp} / ${player.xpToNextLevel}`, 20, 90);
 
   const minutes = Math.floor(gameTime / 60);
-
   const seconds = Math.floor(gameTime % 60);
 
   const formattedTime =
@@ -62,10 +63,48 @@ const renderStats = (
     `${seconds.toString().padStart(2, "0")}`;
 
   ctx.fillText(`Time: ${formattedTime}`, 20, 115);
-
   ctx.fillText(`Kills: ${kills}`, 20, 140);
-
   ctx.fillText(`Wave: ${wave}`, 20, 165);
+};
+
+const renderWeapons = (
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+) => {
+  const weapons = [
+    {
+      key: "1",
+      name: "Pistol",
+      type: "pistol",
+    },
+    {
+      key: "2",
+      name: "Shotgun",
+      type: "shotgun",
+    },
+    {
+      key: "3",
+      name: "Rifle",
+      type: "rifle",
+    },
+  ] as const;
+
+  ctx.font = "18px Arial";
+
+  weapons.forEach((item, index) => {
+    const x = 20 + index * 150;
+    const y = canvas.height - 35;
+
+    const isActive = weapon.type === item.type;
+
+    ctx.globalAlpha = isActive ? 1 : 0.45;
+
+    ctx.fillStyle = "#fff";
+
+    ctx.fillText(`[${item.key}] ${item.name}`, x, y);
+  });
+
+  ctx.globalAlpha = 1;
 };
 
 const renderExperienceBar = (

@@ -9,23 +9,67 @@ const loadImage = (src: string) => {
 };
 
 export const sprites = {
-  playerIdle: Array.from({ length: 20 }, (_, index) =>
-    loadImage(
-      `/sprites/player/handgun-idle/survivor-idle_handgun_${index}.png`,
-    ),
-  ),
+  player: {
+    pistol: {
+      idle: Array.from({ length: 20 }, (_, index) =>
+        loadImage(
+          `/sprites/player/handgun-idle/survivor-idle_handgun_${index}.png`,
+        ),
+      ),
 
-  playerMove: Array.from({ length: 20 }, (_, index) =>
-    loadImage(
-      `/sprites/player/handgun-move/survivor-move_handgun_${index}.png`,
-    ),
-  ),
+      move: Array.from({ length: 20 }, (_, index) =>
+        loadImage(
+          `/sprites/player/handgun-move/survivor-move_handgun_${index}.png`,
+        ),
+      ),
 
-  playerShoot: Array.from({ length: 3 }, (_, index) =>
-    loadImage(
-      `/sprites/player/handgun-shoot/survivor-shoot_handgun_${index}.png`,
-    ),
-  ),
+      shoot: Array.from({ length: 3 }, (_, index) =>
+        loadImage(
+          `/sprites/player/handgun-shoot/survivor-shoot_handgun_${index}.png`,
+        ),
+      ),
+    },
+
+    shotgun: {
+      idle: Array.from({ length: 20 }, (_, index) =>
+        loadImage(
+          `/sprites/player/shotgun-idle/survivor-idle_shotgun_${index}.png`,
+        ),
+      ),
+
+      move: Array.from({ length: 20 }, (_, index) =>
+        loadImage(
+          `/sprites/player/shotgun-move/survivor-move_shotgun_${index}.png`,
+        ),
+      ),
+
+      shoot: Array.from({ length: 3 }, (_, index) =>
+        loadImage(
+          `/sprites/player/shotgun-shoot/survivor-shoot_shotgun_${index}.png`,
+        ),
+      ),
+    },
+
+    rifle: {
+      idle: Array.from({ length: 20 }, (_, index) =>
+        loadImage(
+          `/sprites/player/rifle-idle/survivor-idle_rifle_${index}.png`,
+        ),
+      ),
+
+      move: Array.from({ length: 20 }, (_, index) =>
+        loadImage(
+          `/sprites/player/rifle-move/survivor-move_rifle_${index}.png`,
+        ),
+      ),
+
+      shoot: Array.from({ length: 3 }, (_, index) =>
+        loadImage(
+          `/sprites/player/rifle-shoot/survivor-shoot_rifle_${index}.png`,
+        ),
+      ),
+    },
+  },
 
   zombieAttack: Array.from({ length: 20 }, (_, index) =>
     loadImage(
