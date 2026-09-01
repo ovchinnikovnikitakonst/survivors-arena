@@ -57,9 +57,17 @@ export const updateEnemyMovement = (enemy: Enemy, deltaTime: number) => {
   }
 
   if (enemy.type === "brute") {
+    const stopDistance = enemy.radius + player.radius + 20;
+
+    if (distance <= stopDistance) {
+      return;
+    }
+
     enemy.x += directionX * enemy.speed * deltaTime;
 
     enemy.y += directionY * enemy.speed * deltaTime;
+
+    return;
   }
 
   if (enemy.type === "boss") {

@@ -55,6 +55,7 @@ export const updateSpawnSystem = ({
     bossSpawnedWave: nextBossSpawnedWave,
   };
 };
+
 const spawnEnemy = (
   enemies: Enemy[],
   canvas: HTMLCanvasElement,

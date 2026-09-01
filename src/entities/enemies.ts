@@ -84,8 +84,9 @@ export const createEnemy = (type: EnemyType, x: number, y: number): Enemy => {
 
     fireInterval: type === "shooter" ? 1.5 : undefined,
 
-    attackAnimationTime: type === "zombie" ? 0 : undefined,
+    attackAnimationTime: type === "zombie" || type === "brute" ? 0 : undefined,
 
-    hasDealtAttackDamage: type === "zombie" ? false : undefined,
+    hasDealtAttackDamage:
+      type === "zombie" || type === "brute" ? false : undefined,
   };
 };

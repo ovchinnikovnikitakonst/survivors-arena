@@ -34,9 +34,15 @@ export const sprites = {
   zombieWalk: Array.from({ length: 32 }, (_, index) =>
     loadImage(`/sprites/zombie/walk/walk${String(index).padStart(4, "0")}.png`),
   ),
-  zombie: loadImage("/sprites/zombie.png"),
+
+  bruteMove: Array.from({ length: 17 }, (_, index) =>
+    loadImage(`/sprites/brute/move/skeleton-move_${index}.png`),
+  ),
+
+  bruteAttack: Array.from({ length: 9 }, (_, index) =>
+    loadImage(`/sprites/brute/attack/skeleton-attack_${index}.png`),
+  ),
   bat: loadImage("/sprites/bat.png"),
-  brute: loadImage("/sprites/brute.png"),
   shooter: loadImage("/sprites/shooter.png"),
   xp: loadImage("/sprites/xp.png"),
 
