@@ -68,6 +68,22 @@ const upgrades: Upgrade[] = [
       weapon.projectileCount += 1;
     },
   },
+
+  {
+    name: "Piercing",
+    description: "+1 enemy penetration",
+    apply: () => {
+      weapon.projectilePierce += 1;
+    },
+  },
+
+  {
+    name: "Damage",
+    description: "+1 projectile damage",
+    apply: () => {
+      weapon.projectileDamage += 1;
+    },
+  },
 ];
 
 export const getRandomUpgrades = (count: number): Upgrade[] => {

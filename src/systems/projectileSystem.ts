@@ -70,6 +70,12 @@ export const updateProjectiles = ({
 
       playHitSound();
 
+      if (projectile.pierce > 0) {
+        projectile.pierce -= 1;
+      } else {
+        projectiles.splice(projectileIndex, 1);
+      }
+
       hitEffects.push({
         x: projectile.x,
         y: projectile.y,

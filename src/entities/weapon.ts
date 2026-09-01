@@ -11,6 +11,8 @@ const DEFAULT_WEAPON = {
   shootCooldown: 0,
 
   projectileCount: 1,
+
+  projectilePierce: 0,
 };
 
 export const weapon = {
@@ -72,6 +74,7 @@ export const shoot = (enemies: Enemy[], projectiles: Projectile[]) => {
       velocityY: directionY * weapon.projectileSpeed,
 
       damage: weapon.projectileDamage,
+      pierce: weapon.projectilePierce,
     });
   }
 };

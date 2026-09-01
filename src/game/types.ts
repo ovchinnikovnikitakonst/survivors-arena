@@ -46,13 +46,18 @@ export type HitEffect = {
 export type Projectile = {
   x: number;
   y: number;
+
   radius: number;
   speed: number;
+
   directionX: number;
   directionY: number;
+
   velocityX: number;
   velocityY: number;
+
   damage: number;
+  pierce: number;
 };
 
 export type EnemyProjectile = {
