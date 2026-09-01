@@ -48,7 +48,7 @@ const enemyConfigs: Record<EnemyType, EnemyConfig> = {
 
   boss: {
     radius: 45,
-    spriteSize: 220,
+    spriteSize: 180,
     speed: 55,
 
     hp: 25,
@@ -93,5 +93,11 @@ export const createEnemy = (type: EnemyType, x: number, y: number): Enemy => {
       type === "zombie" || type === "runner" || type === "brute"
         ? false
         : undefined,
+
+    bossDashTime: type === "boss" ? 0 : undefined,
+
+    bossDashDirectionX: type === "boss" ? 0 : undefined,
+
+    bossDashDirectionY: type === "boss" ? 0 : undefined,
   };
 };

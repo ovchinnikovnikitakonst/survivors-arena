@@ -77,17 +77,35 @@ export const updateEnemyMovement = (enemy: Enemy, deltaTime: number) => {
   if (enemy.type === "boss") {
     enemy.bossDashCooldown ??= 3;
     enemy.bossDashWarning ??= 0;
+    enemy.bossDashTime ??= 0;
+
+    if (enemy.bossDashTime > 0) {
+      const dashSpeed = 750;
+
+      enemy.x += (enemy.bossDashDirectionX ?? 0) * dashSpeed * deltaTime;
+
+      enemy.y += (enemy.bossDashDirectionY ?? 0) * dashSpeed * deltaTime;
+
+      enemy.bossDashTime -= deltaTime;
+
+      if (enemy.bossDashTime <= 0) {
+        enemy.bossDashTime = 0;
+        enemy.bossDashCooldown = 3;
+      }
+
+      return;
+    }
 
     if (enemy.bossDashWarning > 0) {
       enemy.bossDashWarning -= deltaTime;
 
       if (enemy.bossDashWarning <= 0) {
-        const dashForce = 220;
+        enemy.bossDashWarning = 0;
 
-        enemy.x += directionX * dashForce;
-        enemy.y += directionY * dashForce;
+        enemy.bossDashDirectionX = directionX;
+        enemy.bossDashDirectionY = directionY;
 
-        enemy.bossDashCooldown = 3;
+        enemy.bossDashTime = 0.3;
       }
 
       return;

@@ -55,10 +55,16 @@ export const sprites = {
     ),
   ),
 
+  bossMove: loadImage("/sprites/boss/gargant/gargant-boss-move.png"),
+
+  bossAttack: loadImage("/sprites/boss/gargant/gargant-boss-attack.png"),
+
+  bossDeathA: loadImage("/sprites/boss/gargant/gargant-boss-death-0.png"),
+
+  bossDeathB: loadImage("/sprites/boss/gargant/gargant-boss-death-1.png"),
+
   shooter: loadImage("/sprites/shooter.png"),
   xp: loadImage("/sprites/xp.png"),
-
-  boss: loadImage("/sprites/boss/Boss.png"),
 
   bossDeath: Array.from({ length: 25 }, (_, index) =>
     loadImage(

@@ -29,6 +29,10 @@ export type Enemy = {
 
   attackAnimationTime?: number;
   hasDealtAttackDamage?: boolean;
+
+  bossDashTime?: number;
+  bossDashDirectionX?: number;
+  bossDashDirectionY?: number;
 };
 
 export type Projectile = {

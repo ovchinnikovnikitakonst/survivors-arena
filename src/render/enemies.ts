@@ -1,7 +1,6 @@
 import { camera } from "../game/camera";
 import { sprites } from "./sprites";
 import { player } from "../entities/player";
-import { drawImageFlippedX } from "./utils";
 import { drawImageRotated } from "./utils";
 
 import type { Enemy } from "../game/types";
@@ -10,25 +9,65 @@ export const renderEnemies = (
   ctx: CanvasRenderingContext2D,
   enemies: Enemy[],
 ) => {
-  for (const enemy of enemies) {
+  const sortedEnemies = [...enemies].sort((a, b) => {
+    if (a.type === "boss") return 1;
+    if (b.type === "boss") return -1;
+
+    return a.y - b.y;
+  });
+
+  for (const enemy of sortedEnemies) {
     const screenX = enemy.x - camera.x;
     const screenY = enemy.y - camera.y;
 
     if (enemy.type === "boss" && enemy.isDying) {
-      const frameDuration = 0.06;
+      const frameDuration = 0.08;
+      const frameCount = 8;
+
+      const deathTime = enemy.deathAnimationTime ?? 0;
+
+      const useSecondSheet = deathTime >= frameDuration * frameCount;
+
+      const spriteSheet = useSecondSheet
+        ? sprites.bossDeathB
+        : sprites.bossDeathA;
+
+      const localTime = useSecondSheet
+        ? deathTime - frameDuration * frameCount
+        : deathTime;
 
       const frameIndex = Math.min(
-        Math.floor((enemy.deathAnimationTime ?? 0) / frameDuration),
-        sprites.bossDeath.length - 1,
+        Math.floor(localTime / frameDuration),
+        frameCount - 1,
       );
 
+      const frameWidth = spriteSheet.width / frameCount;
+
+      const frameHeight = spriteSheet.height;
+
+      const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+
+      ctx.save();
+
+      ctx.translate(screenX, screenY);
+
+      ctx.rotate(angle + Math.PI / 2);
+
       ctx.drawImage(
-        sprites.bossDeath[frameIndex],
-        screenX - enemy.spriteSize / 2,
-        screenY - enemy.spriteSize / 2,
+        spriteSheet,
+
+        frameIndex * frameWidth,
+        0,
+        frameWidth,
+        frameHeight,
+
+        -enemy.spriteSize / 2,
+        -enemy.spriteSize / 2,
         enemy.spriteSize,
         enemy.spriteSize,
       );
+
+      ctx.restore();
 
       continue;
     }
@@ -187,6 +226,8 @@ export const renderEnemies = (
     if (enemy.type === "boss") {
       const isPreparingDash = (enemy.bossDashWarning ?? 0) > 0;
 
+      const isDashing = (enemy.bossDashTime ?? 0) > 0;
+
       if (isPreparingDash) {
         ctx.beginPath();
 
@@ -195,21 +236,47 @@ export const renderEnemies = (
         ctx.strokeStyle = "#ff0000";
         ctx.lineWidth = 5;
         ctx.stroke();
-
-        ctx.globalAlpha = 0.6;
       }
 
-      const flipX = player.x > enemy.x;
+      const spriteSheet = isDashing ? sprites.bossAttack : sprites.bossMove;
 
-      drawImageFlippedX(
-        ctx,
-        sprites.boss,
-        screenX - enemy.spriteSize / 2,
-        screenY - enemy.spriteSize / 2,
+      const frameCount = isDashing ? 5 : 8;
+
+      const frameWidth = spriteSheet.width / frameCount;
+
+      const frameHeight = spriteSheet.height;
+
+      const frameDuration = isDashing ? 40 : 120;
+
+      const frameIndex =
+        Math.floor(performance.now() / frameDuration) % frameCount;
+
+      const angle = isDashing
+        ? Math.atan2(
+            enemy.bossDashDirectionY ?? 0,
+            enemy.bossDashDirectionX ?? 0,
+          )
+        : Math.atan2(player.y - enemy.y, player.x - enemy.x);
+
+      ctx.save();
+
+      ctx.translate(screenX, screenY);
+
+      ctx.rotate(angle + Math.PI / 2);
+
+      ctx.drawImage(
+        spriteSheet,
+        frameIndex * frameWidth,
+        0,
+        frameWidth,
+        frameHeight,
+        -enemy.spriteSize / 2,
+        -enemy.spriteSize / 2,
         enemy.spriteSize,
         enemy.spriteSize,
-        flipX,
       );
+
+      ctx.restore();
     }
 
     ctx.globalAlpha = 1;
