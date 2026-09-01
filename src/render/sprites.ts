@@ -7,6 +7,23 @@ const loadImage = (src: string) => {
 };
 
 export const sprites = {
+  playerIdle: Array.from({ length: 20 }, (_, index) =>
+    loadImage(
+      `/sprites/player/handgun-idle/survivor-idle_handgun_${index}.png`,
+    ),
+  ),
+
+  playerMove: Array.from({ length: 20 }, (_, index) =>
+    loadImage(
+      `/sprites/player/handgun-move/survivor-move_handgun_${index}.png`,
+    ),
+  ),
+
+  playerShoot: Array.from({ length: 3 }, (_, index) =>
+    loadImage(
+      `/sprites/player/handgun-shoot/survivor-shoot_handgun_${index}.png`,
+    ),
+  ),
   player: loadImage("/sprites/player.png"),
   zombie: loadImage("/sprites/zombie.png"),
   bat: loadImage("/sprites/bat.png"),

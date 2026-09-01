@@ -24,6 +24,8 @@ export const shoot = (enemies: Enemy[], projectiles: Projectile[]) => {
     return;
   }
 
+  player.shootAnimationTime = 0.15;
+
   const dx = target.x - player.x;
   const dy = target.y - player.y;
 

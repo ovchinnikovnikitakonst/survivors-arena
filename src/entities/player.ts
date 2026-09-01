@@ -18,6 +18,8 @@ const DEFAULT_PLAYER = {
   xpToNextLevel: 5,
 
   facingAngle: 0,
+
+  shootAnimationTime: 0,
 };
 
 export const player = {

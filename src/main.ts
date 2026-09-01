@@ -129,6 +129,10 @@ const update = (deltaTime: number) => {
     player.damageCooldown -= deltaTime;
   }
 
+  if (player.shootAnimationTime > 0) {
+    player.shootAnimationTime -= deltaTime;
+  }
+
   updatePlayerMovement(keys, deltaTime);
 
   camera.x = player.x - canvas.width / 2;
