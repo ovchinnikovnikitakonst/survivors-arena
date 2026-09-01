@@ -9,13 +9,17 @@ const collidesWithWorld = (x: number, y: number) => {
       continue;
     }
 
-    const left = object.x - object.collisionWidth / 2;
+    const collisionX = object.x + (object.collisionOffsetX ?? 0);
 
-    const right = object.x + object.collisionWidth / 2;
+    const collisionY = object.y + (object.collisionOffsetY ?? 0);
 
-    const top = object.y - object.collisionHeight / 2;
+    const left = collisionX - object.collisionWidth / 2;
 
-    const bottom = object.y + object.collisionHeight / 2;
+    const right = collisionX + object.collisionWidth / 2;
+
+    const top = collisionY - object.collisionHeight / 2;
+
+    const bottom = collisionY + object.collisionHeight / 2;
 
     const closestX = Math.max(left, Math.min(x, right));
 

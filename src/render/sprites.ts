@@ -73,9 +73,6 @@ export const sprites = {
   ),
 
   world: {
-    grass: loadImage("/sprites/world/grass.png"),
-    rock: loadImage("/sprites/world/rock.png"),
-    tree: loadImage("/sprites/world/tree.png"),
-    car: loadImage("/sprites/world/car.png"),
+    graveyard: loadImage("/sprites/world/graveyard/Graveyard_Set.png"),
   },
 };

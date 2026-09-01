@@ -1,6 +1,6 @@
-import type { WorldObject, WorldObjectType } from "../game/types";
+import type { WorldObject } from "../game/types";
 
-export const TILE_SIZE = 64;
+export const TILE_SIZE = 48;
 
 const hash = (x: number, y: number) => {
   const value = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
@@ -8,58 +8,103 @@ const hash = (x: number, y: number) => {
   return value - Math.floor(value);
 };
 
-const getWorldObjectType = (
+export const generateWorldObject = (
   tileX: number,
   tileY: number,
-): WorldObjectType | null => {
+): WorldObject | null => {
   if (Math.abs(tileX) <= 2 && Math.abs(tileY) <= 2) {
     return null;
   }
 
   const random = hash(tileX, tileY);
 
-  if (random < 0.04) {
-    return "car";
-  }
-
-  if (random < 0.1) {
-    return "tree";
-  }
-
-  if (random < 0.18) {
-    return "rock";
-  }
-
-  if (random < 0.4) {
-    return "grass";
-  }
-
-  return null;
-};
-
-export const generateWorldObject = (
-  tileX: number,
-  tileY: number,
-): WorldObject | null => {
-  const type = getWorldObjectType(tileX, tileY);
-
-  if (!type) {
-    return null;
-  }
-
   const worldX = tileX * TILE_SIZE;
-
   const worldY = tileY * TILE_SIZE;
 
-  const offsetX = hash(tileX + 100, tileY) * 30 + 16;
+  const offsetX = hash(tileX + 100, tileY) * 40 + 4;
+  const offsetY = hash(tileX, tileY + 100) * 40 + 4;
 
-  const offsetY = hash(tileX, tileY + 100) * 30 + 16;
+  const x = worldX + offsetX;
+  const y = worldY + offsetY;
 
-  if (type === "grass") {
+  if (random < 0.015) {
     return {
-      type,
-      x: worldX + offsetX,
-      y: worldY + offsetY,
+      type: "deadTree",
+
+      x,
+      y,
+
+      width: 90,
+      height: 130,
+
+      collisionWidth: 28,
+      collisionHeight: 20,
+
+      collisionOffsetX: 0,
+      collisionOffsetY: 45,
+
+      solid: true,
+
+      sourceX: 16,
+      sourceY: 23,
+      sourceWidth: 3,
+      sourceHeight: 5,
+    };
+  }
+
+  if (random < 0.03) {
+    const graveVariants = [
+      { sourceX: 18, sourceY: 11 },
+      { sourceX: 20, sourceY: 11 },
+    ];
+
+    const graveVariant =
+      graveVariants[
+        Math.floor(hash(tileX + 400, tileY + 400) * graveVariants.length)
+      ];
+
+    return {
+      type: "grave",
+
+      x,
+      y,
+
+      width: 55,
+      height: 70,
+
+      collisionWidth: 20,
+      collisionHeight: 8,
+
+      collisionOffsetX: 0,
+      collisionOffsetY: 20,
+
+      solid: true,
+
+      sourceX: graveVariant.sourceX,
+      sourceY: graveVariant.sourceY,
+      sourceWidth: 2,
+      sourceHeight: 3,
+    };
+  }
+
+  if (random < 0.05) {
+    const boneVariants = [
+      { sourceX: 5, sourceY: 21 },
+      { sourceX: 10, sourceY: 22 },
+      { sourceX: 7, sourceY: 22 },
+    ];
+
+    const variantIndex = Math.floor(
+      hash(tileX + 300, tileY + 300) * boneVariants.length,
+    );
+
+    const variant = boneVariants[variantIndex];
+
+    return {
+      type: "bones",
+
+      x,
+      y,
 
       width: 28,
       height: 28,
@@ -68,54 +113,49 @@ export const generateWorldObject = (
       collisionHeight: 0,
 
       solid: false,
+
+      sourceX: variant.sourceX,
+      sourceY: variant.sourceY,
+      sourceWidth: 1,
+      sourceHeight: 1,
     };
   }
 
-  if (type === "rock") {
-    return {
-      type,
-      x: worldX + offsetX,
-      y: worldY + offsetY,
+  if (random < 0.2) {
+    const grassVariants = [
+      { sourceX: 20, sourceY: 23 },
+      { sourceX: 21, sourceY: 23 },
+      { sourceX: 22, sourceY: 23 },
+    ];
 
-      width: 32,
-      height: 32,
+    const variantIndex = Math.floor(
+      hash(tileX + 200, tileY + 200) * grassVariants.length,
+    );
+
+    const variant = grassVariants[variantIndex];
+
+    return {
+      type: "grass",
+
+      x,
+      y,
+
+      width: 30,
+      height: 22,
 
       collisionWidth: 0,
       collisionHeight: 0,
 
       solid: false,
+
+      sourceX: variant.sourceX,
+      sourceY: variant.sourceY,
+      sourceWidth: 1,
+      sourceHeight: 1,
     };
   }
 
-  if (type === "tree") {
-    return {
-      type,
-      x: worldX + offsetX,
-      y: worldY + offsetY,
-
-      width: 72,
-      height: 72,
-
-      collisionWidth: 24,
-      collisionHeight: 28,
-
-      solid: true,
-    };
-  }
-
-  return {
-    type,
-    x: worldX + offsetX,
-    y: worldY + offsetY,
-
-    width: 80,
-    height: 80,
-
-    collisionWidth: 58,
-    collisionHeight: 34,
-
-    solid: true,
-  };
+  return null;
 };
 
 export const getNearbyWorldObjects = (
