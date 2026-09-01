@@ -1,7 +1,9 @@
 const loadImage = (src: string) => {
   const image = new Image();
 
-  image.src = src;
+  const normalizedSrc = src.startsWith("/") ? src.slice(1) : src;
+
+  image.src = `${import.meta.env.BASE_URL}${normalizedSrc}`;
 
   return image;
 };
