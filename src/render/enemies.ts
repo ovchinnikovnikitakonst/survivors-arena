@@ -79,22 +79,47 @@ export const renderEnemies = (
       );
     }
 
-    if (enemy.type === "bat") {
-      const frameWidth = 32;
-      const frameHeight = 32;
+    if (enemy.type === "runner") {
+      const dx = player.x - enemy.x;
+      const dy = player.y - enemy.y;
 
-      const frameIndex = Math.floor(performance.now() / 150) % 2;
+      const distance = Math.hypot(dx, dy);
 
-      ctx.drawImage(
-        sprites.bat,
-        frameIndex * frameWidth,
-        0,
-        frameWidth,
-        frameHeight,
+      const angle = Math.atan2(dy, dx);
+
+      const attackDistance = enemy.radius + player.radius + 30;
+
+      const isAttacking = distance <= attackDistance;
+
+      let currentFrame: HTMLImageElement;
+
+      if (isAttacking) {
+        const frameDuration = 0.07;
+
+        const frameIndex = Math.min(
+          Math.floor((enemy.attackAnimationTime ?? 0) / frameDuration),
+          sprites.runnerAttack.length - 1,
+        );
+
+        currentFrame = sprites.runnerAttack[frameIndex];
+      } else {
+        const frameDuration = 55;
+
+        const frameIndex =
+          Math.floor(performance.now() / frameDuration) %
+          sprites.runnerMove.length;
+
+        currentFrame = sprites.runnerMove[frameIndex];
+      }
+
+      drawImageRotated(
+        ctx,
+        currentFrame,
         screenX - enemy.spriteSize / 2,
         screenY - enemy.spriteSize / 2,
         enemy.spriteSize,
         enemy.spriteSize,
+        angle,
       );
     }
 

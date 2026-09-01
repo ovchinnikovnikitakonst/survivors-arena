@@ -34,7 +34,7 @@ export const updateEnemies = ({
 
     const distance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
 
-    if (enemy.type === "zombie") {
+    if (enemy.type === "zombie" || enemy.type === "runner") {
       const attackDistance = enemy.radius + player.radius + 30;
 
       if (distance > attackDistance) {

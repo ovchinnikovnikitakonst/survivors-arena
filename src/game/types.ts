@@ -1,4 +1,4 @@
-export type EnemyType = "zombie" | "bat" | "brute" | "shooter" | "boss";
+export type EnemyType = "zombie" | "runner" | "brute" | "shooter" | "boss";
 
 export type Enemy = {
   type: EnemyType;

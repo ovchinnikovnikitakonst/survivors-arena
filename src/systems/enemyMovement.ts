@@ -28,12 +28,16 @@ export const updateEnemyMovement = (enemy: Enemy, deltaTime: number) => {
     return;
   }
 
-  if (enemy.type === "bat") {
-    const wave = Math.sin(performance.now() / 150) * 0.6;
+  if (enemy.type === "runner") {
+    const stopDistance = enemy.radius + player.radius + 15;
 
-    enemy.x += (directionX - directionY * wave) * enemy.speed * deltaTime;
+    if (distance <= stopDistance) {
+      return;
+    }
 
-    enemy.y += (directionY + directionX * wave) * enemy.speed * deltaTime;
+    enemy.x += directionX * enemy.speed * deltaTime;
+
+    enemy.y += directionY * enemy.speed * deltaTime;
 
     return;
   }

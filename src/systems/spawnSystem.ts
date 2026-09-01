@@ -69,13 +69,13 @@ const spawnEnemy = (
 
   if (wave === 1) {
     if (random < 0.2) {
-      enemyType = "bat";
+      enemyType = "runner";
     }
   }
 
   if (wave === 2) {
     if (random < 0.2) {
-      enemyType = "bat";
+      enemyType = "runner";
     } else if (random < 0.3) {
       enemyType = "shooter";
     }
@@ -83,7 +83,7 @@ const spawnEnemy = (
 
   if (wave >= 3) {
     if (random < 0.2) {
-      enemyType = "bat";
+      enemyType = "runner";
     } else if (random < 0.35) {
       enemyType = "shooter";
     } else if (random < 0.5) {

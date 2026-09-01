@@ -42,7 +42,19 @@ export const sprites = {
   bruteAttack: Array.from({ length: 9 }, (_, index) =>
     loadImage(`/sprites/brute/attack/skeleton-attack_${index}.png`),
   ),
-  bat: loadImage("/sprites/bat.png"),
+
+  runnerMove: Array.from({ length: 31 }, (_, index) =>
+    loadImage(
+      `/sprites/runner/run/run${String(index + 1).padStart(4, "0")}.png`,
+    ),
+  ),
+
+  runnerAttack: Array.from({ length: 20 }, (_, index) =>
+    loadImage(
+      `/sprites/runner/attack/attack03_${String(index).padStart(4, "0")}.png`,
+    ),
+  ),
+
   shooter: loadImage("/sprites/shooter.png"),
   xp: loadImage("/sprites/xp.png"),
 
