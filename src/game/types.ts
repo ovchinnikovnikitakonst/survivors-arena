@@ -35,6 +35,14 @@ export type Enemy = {
   bossDashDirectionY?: number;
 };
 
+export type HitEffect = {
+  x: number;
+  y: number;
+  time: number;
+  duration: number;
+  radius: number;
+};
+
 export type Projectile = {
   x: number;
   y: number;
@@ -44,6 +52,7 @@ export type Projectile = {
   directionY: number;
   velocityX: number;
   velocityY: number;
+  damage: number;
 };
 
 export type EnemyProjectile = {

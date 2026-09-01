@@ -15,18 +15,26 @@ export const updateEnemyCombat = (
     return;
   }
 
-  enemy.shootCooldown -= deltaTime;
-
-  if (enemy.shootCooldown > 0) {
-    return;
-  }
-
   const dx = player.x - enemy.x;
   const dy = player.y - enemy.y;
 
   const distance = Math.hypot(dx, dy);
 
   if (distance === 0) {
+    return;
+  }
+
+  const attackDistance = 330;
+
+  if (distance > attackDistance) {
+    enemy.shootCooldown = enemy.fireInterval;
+
+    return;
+  }
+
+  enemy.shootCooldown -= deltaTime;
+
+  if (enemy.shootCooldown > 0) {
     return;
   }
 

@@ -15,6 +15,9 @@ import { renderPlayer } from "./render/player";
 import { renderProjectiles } from "./render/projectiles";
 import { renderExperienceOrbs } from "./render/experience";
 import { renderHud } from "./render/hud";
+import type { HitEffect } from "./game/types";
+import { renderHitEffects } from "./render/hitEffects";
+import { playBackgroundMusic } from "./audio/audio";
 
 import type {
   Enemy,
@@ -65,10 +68,13 @@ const experienceOrbs: ExperienceOrb[] = [];
 const projectiles: Projectile[] = [];
 // массив врежеских пуль
 const enemyProjectiles: EnemyProjectile[] = [];
+// массив попаданий
+const hitEffects: HitEffect[] = [];
 
 const keys = new Set<string>();
 
 window.addEventListener("keydown", (event) => {
+  void playBackgroundMusic();
   if (gameState === "gameOver" && event.code === "KeyR") {
     restartGame();
     return;
@@ -157,6 +163,7 @@ const update = (deltaTime: number) => {
   }
 
   updateProjectiles({
+    hitEffects,
     projectiles,
     enemyProjectiles,
     enemies,
@@ -171,6 +178,14 @@ const update = (deltaTime: number) => {
       gameState = "gameOver";
     },
   });
+
+  for (let i = hitEffects.length - 1; i >= 0; i--) {
+    hitEffects[i].time += deltaTime;
+
+    if (hitEffects[i].time >= hitEffects[i].duration) {
+      hitEffects.splice(i, 1);
+    }
+  }
 
   updateExperience({
     experienceOrbs,
@@ -195,6 +210,8 @@ const render = () => {
   renderEnemies(ctx, enemies);
 
   renderProjectiles(ctx, projectiles, enemyProjectiles);
+
+  renderHitEffects(ctx, hitEffects);
 
   renderExperienceOrbs(ctx, experienceOrbs);
 

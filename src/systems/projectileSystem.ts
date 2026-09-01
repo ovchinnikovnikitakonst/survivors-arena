@@ -1,10 +1,12 @@
 import { player } from "../entities/player";
+import { playHitSound } from "../audio/audio";
 
 import type {
   Enemy,
   Projectile,
   EnemyProjectile,
   ExperienceOrb,
+  HitEffect,
 } from "../game/types";
 
 type UpdateProjectilesParams = {
@@ -12,6 +14,7 @@ type UpdateProjectilesParams = {
   enemyProjectiles: EnemyProjectile[];
   enemies: Enemy[];
   experienceOrbs: ExperienceOrb[];
+  hitEffects: HitEffect[];
   deltaTime: number;
   onEnemyKilled: () => void;
   onPlayerDeath: () => void;
@@ -22,6 +25,7 @@ export const updateProjectiles = ({
   enemyProjectiles,
   enemies,
   experienceOrbs,
+  hitEffects,
   deltaTime,
   onEnemyKilled,
   onPlayerDeath,
@@ -61,8 +65,18 @@ export const updateProjectiles = ({
         continue;
       }
 
-      enemy.hp -= 1;
+      enemy.hp -= projectile.damage;
       enemy.hitFlash = 0.12;
+
+      playHitSound();
+
+      hitEffects.push({
+        x: projectile.x,
+        y: projectile.y,
+        time: 0,
+        duration: 0.12,
+        radius: 5,
+      });
 
       const knockbackForce = 12;
 

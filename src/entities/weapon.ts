@@ -1,11 +1,15 @@
 import type { Enemy, Projectile } from "../game/types";
 import { player } from "./player";
+import { playShootSound } from "../audio/audio";
 
 const DEFAULT_WEAPON = {
   projectileSpeed: 500,
   projectileRadius: 6,
+  projectileDamage: 1,
+
   fireInterval: 0.5,
   shootCooldown: 0,
+
   projectileCount: 1,
 };
 
@@ -18,11 +22,14 @@ export const resetWeapon = () => {
 };
 
 export const shoot = (enemies: Enemy[], projectiles: Projectile[]) => {
+  const muzzleOffset = player.radius + 8;
   const target = getNearestEnemy(enemies);
 
   if (!target) {
     return;
   }
+
+  playShootSound();
 
   player.shootAnimationTime = 0.15;
 
@@ -39,7 +46,10 @@ export const shoot = (enemies: Enemy[], projectiles: Projectile[]) => {
   const spread = 0.2;
 
   for (let i = 0; i < weapon.projectileCount; i++) {
-    const offset = (i - (weapon.projectileCount - 1) / 2) * spread;
+    const randomSpread = (Math.random() - 0.4) * 0.06;
+
+    const offset =
+      (i - (weapon.projectileCount - 1) / 2) * spread + randomSpread;
 
     const cos = Math.cos(offset);
     const sin = Math.sin(offset);
@@ -49,8 +59,8 @@ export const shoot = (enemies: Enemy[], projectiles: Projectile[]) => {
     const directionY = baseDirectionX * sin + baseDirectionY * cos;
 
     projectiles.push({
-      x: player.x,
-      y: player.y,
+      x: player.x + directionX * muzzleOffset,
+      y: player.y + directionY * muzzleOffset,
 
       radius: weapon.projectileRadius,
       speed: weapon.projectileSpeed,
@@ -58,9 +68,10 @@ export const shoot = (enemies: Enemy[], projectiles: Projectile[]) => {
       directionX,
       directionY,
 
-      velocityX: directionX * weapon.projectileSpeed + player.velocityX,
+      velocityX: directionX * weapon.projectileSpeed,
+      velocityY: directionY * weapon.projectileSpeed,
 
-      velocityY: directionY * weapon.projectileSpeed + player.velocityY,
+      damage: weapon.projectileDamage,
     });
   }
 };
@@ -70,6 +81,10 @@ const getNearestEnemy = (enemies: Enemy[]): Enemy | null => {
   let nearestDistance = Infinity;
 
   for (const enemy of enemies) {
+    if (enemy.isDying) {
+      continue;
+    }
+
     const distance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
 
     if (distance < nearestDistance) {
