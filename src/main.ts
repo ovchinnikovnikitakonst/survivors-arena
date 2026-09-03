@@ -84,6 +84,18 @@ canvas.addEventListener("mousemove", (event) => {
 });
 
 window.addEventListener("keydown", (event) => {
+  if (event.code === "Escape" || event.code === "KeyP") {
+    if (gameState === "playing") {
+      gameState = "paused";
+      return;
+    }
+
+    if (gameState === "paused") {
+      gameState = "playing";
+      return;
+    }
+  }
+
   void playBackgroundMusic();
   if (gameState === "gameOver" && event.code === "KeyR") {
     restartGame();
@@ -235,6 +247,25 @@ const update = (deltaTime: number) => {
 
 const render = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (gameState === "paused") {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "48px Arial";
+    ctx.textAlign = "center";
+
+    ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
+
+    ctx.font = "20px Arial";
+
+    ctx.fillText(
+      "Press ESC or P to continue",
+      canvas.width / 2,
+      canvas.height / 2 + 40,
+    );
+  }
 
   // фон
   renderWorld(ctx, canvas);

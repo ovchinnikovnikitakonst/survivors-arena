@@ -97,7 +97,19 @@ export const sprites = {
 
   runnerAttack: Array.from({ length: 20 }, (_, index) =>
     loadImage(
-      `/sprites/runner/attack/attack03_${String(index).padStart(4, "0")}.png`,
+      `/sprites/runner/attack/attack02_${String(index).padStart(4, "0")}.png`,
+    ),
+  ),
+
+  shooterWalk: Array.from({ length: 31 }, (_, index) =>
+    loadImage(
+      `/sprites/shooter/walk/saunter${String(index).padStart(4, "0")}.png`,
+    ),
+  ),
+
+  shooterAttack: Array.from({ length: 20 }, (_, index) =>
+    loadImage(
+      `/sprites/shooter/attack/attack03_${String(index).padStart(4, "0")}.png`,
     ),
   ),
 
@@ -109,7 +121,6 @@ export const sprites = {
 
   bossDeathB: loadImage("/sprites/boss/gargant/gargant-boss-death-1.png"),
 
-  shooter: loadImage("/sprites/shooter.png"),
   xp: loadImage("/sprites/xp.png"),
 
   bossDeath: Array.from({ length: 25 }, (_, index) =>

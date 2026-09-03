@@ -28,6 +28,48 @@ export const updateEnemyCombat = (
 
   if (distance > attackDistance) {
     enemy.shootCooldown = enemy.fireInterval;
+    enemy.attackAnimationTime = 0;
+    enemy.hasDealtAttackDamage = false;
+
+    return;
+  }
+
+  const isAttacking = (enemy.attackAnimationTime ?? 0) > 0;
+
+  if (isAttacking) {
+    const frameDuration = 0.07;
+    const frameCount = 20;
+
+    const spitFrame = 10;
+    const spitTime = spitFrame * frameDuration;
+
+    const animationDuration = frameCount * frameDuration;
+
+    enemy.attackAnimationTime = (enemy.attackAnimationTime ?? 0) + deltaTime;
+
+    if (enemy.attackAnimationTime >= spitTime && !enemy.hasDealtAttackDamage) {
+      enemyProjectiles.push({
+        x: enemy.x,
+        y: enemy.y,
+
+        radius: 7,
+        speed: 220,
+
+        directionX: dx / distance,
+        directionY: dy / distance,
+
+        damage: enemy.damage,
+      });
+
+      enemy.hasDealtAttackDamage = true;
+    }
+
+    if (enemy.attackAnimationTime >= animationDuration) {
+      enemy.attackAnimationTime = 0;
+      enemy.hasDealtAttackDamage = false;
+
+      enemy.shootCooldown = enemy.fireInterval;
+    }
 
     return;
   }
@@ -38,18 +80,5 @@ export const updateEnemyCombat = (
     return;
   }
 
-  enemyProjectiles.push({
-    x: enemy.x,
-    y: enemy.y,
-
-    radius: 5,
-    speed: 220,
-
-    directionX: dx / distance,
-    directionY: dy / distance,
-
-    damage: enemy.damage,
-  });
-
-  enemy.shootCooldown = enemy.fireInterval;
+  enemy.attackAnimationTime = deltaTime;
 };

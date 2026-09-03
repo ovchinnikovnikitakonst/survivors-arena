@@ -212,9 +212,32 @@ export const renderEnemies = (
 
       const angle = Math.atan2(dy, dx);
 
+      const isAttacking = (enemy.attackAnimationTime ?? 0) > 0;
+
+      let currentFrame: HTMLImageElement;
+
+      if (isAttacking) {
+        const frameDuration = 0.07;
+
+        const frameIndex = Math.min(
+          Math.floor((enemy.attackAnimationTime ?? 0) / frameDuration),
+          sprites.shooterAttack.length - 1,
+        );
+
+        currentFrame = sprites.shooterAttack[frameIndex];
+      } else {
+        const frameDuration = 90;
+
+        const frameIndex =
+          Math.floor(performance.now() / frameDuration) %
+          sprites.shooterWalk.length;
+
+        currentFrame = sprites.shooterWalk[frameIndex];
+      }
+
       drawImageRotated(
         ctx,
-        sprites.shooter,
+        currentFrame,
         screenX - enemy.spriteSize / 2,
         screenY - enemy.spriteSize / 2,
         enemy.spriteSize,

@@ -39,7 +39,7 @@ const enemyConfigs: Record<EnemyType, EnemyConfig> = {
 
   shooter: {
     radius: 16,
-    spriteSize: 48,
+    spriteSize: 230,
     speed: 80,
     hp: 3,
     damage: 8,
@@ -85,12 +85,18 @@ export const createEnemy = (type: EnemyType, x: number, y: number): Enemy => {
     fireInterval: type === "shooter" ? 1.5 : undefined,
 
     attackAnimationTime:
-      type === "zombie" || type === "runner" || type === "brute"
+      type === "zombie" ||
+      type === "runner" ||
+      type === "brute" ||
+      type === "shooter"
         ? 0
         : undefined,
 
     hasDealtAttackDamage:
-      type === "zombie" || type === "runner" || type === "brute"
+      type === "zombie" ||
+      type === "runner" ||
+      type === "brute" ||
+      type === "shooter"
         ? false
         : undefined,
 

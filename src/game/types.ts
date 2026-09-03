@@ -110,6 +110,6 @@ export type WorldObject = {
   sourceHeight?: number;
 };
 
-export type GameState = "playing" | "levelUp" | "gameOver";
+export type GameState = "playing" | "paused" | "levelUp" | "gameOver";
 
 export type WeaponType = "pistol" | "shotgun" | "rifle";
