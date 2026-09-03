@@ -113,6 +113,8 @@ export const sprites = {
     ),
   ),
 
+  bruteSheet: loadImage("/sprites/brute/zombie_topdown.png"),
+
   bossMove: loadImage("/sprites/boss/gargant/gargant-boss-move.png"),
 
   bossAttack: loadImage("/sprites/boss/gargant/gargant-boss-attack.png"),

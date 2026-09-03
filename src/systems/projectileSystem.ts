@@ -101,7 +101,7 @@ export const updateProjectiles = ({
           magnetRadius: 120,
         });
 
-        if (enemy.type === "boss") {
+        if (enemy.type === "boss" || enemy.type === "brute") {
           enemy.isDying = true;
           enemy.deathAnimationTime = 0;
         } else {

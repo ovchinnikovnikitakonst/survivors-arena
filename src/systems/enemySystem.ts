@@ -88,8 +88,8 @@ export const updateEnemies = ({
       }
 
       const frameDuration = 0.1;
-      const frameCount = 9;
-      const damageFrame = 5;
+      const frameCount = 4;
+      const damageFrame = 2;
 
       const animationDuration = frameDuration * frameCount;
 

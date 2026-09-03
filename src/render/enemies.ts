@@ -72,6 +72,50 @@ export const renderEnemies = (
       continue;
     }
 
+    if (enemy.type === "brute" && enemy.isDying) {
+      const spriteSheet = sprites.bruteSheet;
+
+      const columns = 36;
+      const rows = 8;
+
+      const frameWidth = spriteSheet.width / columns;
+      const frameHeight = spriteSheet.height / rows;
+
+      const firstDeathFrame = 28;
+      const deathFrameCount = 8;
+
+      const frameDuration = 0.12;
+
+      const frameIndex = Math.min(
+        firstDeathFrame +
+          Math.floor((enemy.deathAnimationTime ?? 0) / frameDuration),
+        firstDeathFrame + deathFrameCount - 1,
+      );
+
+      const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+
+      const normalizedAngle = (angle + Math.PI * 2) % (Math.PI * 2);
+
+      const directionIndex =
+        (Math.round(normalizedAngle / (Math.PI / 4)) + 5) % 8;
+
+      ctx.drawImage(
+        spriteSheet,
+
+        frameIndex * frameWidth,
+        directionIndex * frameHeight,
+        frameWidth,
+        frameHeight,
+
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+      );
+
+      continue;
+    }
+
     ctx.globalAlpha = enemy.hitFlash > 0 ? 0.45 : 1;
 
     if (enemy.type === "zombie") {
@@ -174,36 +218,69 @@ export const renderEnemies = (
 
       const isAttacking =
         distance <= attackDistance || (enemy.attackAnimationTime ?? 0) > 0;
-      let currentFrame: HTMLImageElement;
+
+      const spriteSheet = sprites.bruteSheet;
+
+      const columns = 36;
+      const rows = 8;
+
+      const frameWidth = spriteSheet.width / columns;
+      const frameHeight = spriteSheet.height / rows;
+
+      const normalizedAngle = (angle + Math.PI * 2) % (Math.PI * 2);
+
+      const directionIndex =
+        (Math.round(normalizedAngle / (Math.PI / 4)) + 5) % 8;
 
       if (isAttacking) {
+        const firstAttackFrame = 12;
+        const attackFrameCount = 4;
+
         const frameDuration = 0.1;
 
         const frameIndex = Math.min(
-          Math.floor((enemy.attackAnimationTime ?? 0) / frameDuration),
-          sprites.bruteAttack.length - 1,
+          firstAttackFrame +
+            Math.floor((enemy.attackAnimationTime ?? 0) / frameDuration),
+          firstAttackFrame + attackFrameCount - 1,
         );
 
-        currentFrame = sprites.bruteAttack[frameIndex];
+        ctx.drawImage(
+          spriteSheet,
+
+          frameIndex * frameWidth,
+          directionIndex * frameHeight,
+          frameWidth,
+          frameHeight,
+
+          screenX - enemy.spriteSize / 2,
+          screenY - enemy.spriteSize / 2,
+          enemy.spriteSize,
+          enemy.spriteSize,
+        );
       } else {
-        const frameDuration = 90;
+        const firstWalkFrame = 4;
+        const walkFrameCount = 8;
+
+        const frameDuration = 120;
 
         const frameIndex =
-          Math.floor(performance.now() / frameDuration) %
-          sprites.bruteMove.length;
+          firstWalkFrame +
+          (Math.floor(performance.now() / frameDuration) % walkFrameCount);
 
-        currentFrame = sprites.bruteMove[frameIndex];
+        ctx.drawImage(
+          spriteSheet,
+
+          frameIndex * frameWidth,
+          directionIndex * frameHeight,
+          frameWidth,
+          frameHeight,
+
+          screenX - enemy.spriteSize / 2,
+          screenY - enemy.spriteSize / 2,
+          enemy.spriteSize,
+          enemy.spriteSize,
+        );
       }
-
-      drawImageRotated(
-        ctx,
-        currentFrame,
-        screenX - enemy.spriteSize / 2,
-        screenY - enemy.spriteSize / 2,
-        enemy.spriteSize,
-        enemy.spriteSize,
-        angle,
-      );
     }
 
     if (enemy.type === "shooter") {
