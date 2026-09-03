@@ -33,6 +33,8 @@ export type Enemy = {
   bossDashTime?: number;
   bossDashDirectionX?: number;
   bossDashDirectionY?: number;
+
+  deathAngle?: number;
 };
 
 export type HitEffect = {

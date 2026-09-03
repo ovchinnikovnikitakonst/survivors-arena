@@ -72,6 +72,55 @@ export const renderEnemies = (
       continue;
     }
 
+    if (
+      enemy.isDying &&
+      (enemy.type === "zombie" || enemy.type === "shooter")
+    ) {
+      const frameDuration = 0.08;
+
+      const frameIndex = Math.min(
+        Math.floor((enemy.deathAnimationTime ?? 0) / frameDuration),
+        sprites.zombieDeath.length - 1,
+      );
+
+      const currentFrame = sprites.zombieDeath[frameIndex];
+
+      drawImageRotated(
+        ctx,
+        currentFrame,
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+        enemy.deathAngle ?? 0,
+      );
+
+      continue;
+    }
+
+    if (enemy.isDying && enemy.type === "runner") {
+      const frameDuration = 0.08;
+
+      const frameIndex = Math.min(
+        Math.floor((enemy.deathAnimationTime ?? 0) / frameDuration),
+        sprites.runnerDeath.length - 1,
+      );
+
+      const currentFrame = sprites.runnerDeath[frameIndex];
+
+      drawImageRotated(
+        ctx,
+        currentFrame,
+        screenX - enemy.spriteSize / 2,
+        screenY - enemy.spriteSize / 2,
+        enemy.spriteSize,
+        enemy.spriteSize,
+        enemy.deathAngle ?? 0,
+      );
+
+      continue;
+    }
+
     if (enemy.type === "brute" && enemy.isDying) {
       const spriteSheet = sprites.bruteSheet;
 
@@ -92,7 +141,7 @@ export const renderEnemies = (
         firstDeathFrame + deathFrameCount - 1,
       );
 
-      const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
+      const angle = enemy.deathAngle ?? 0;
 
       const normalizedAngle = (angle + Math.PI * 2) % (Math.PI * 2);
 

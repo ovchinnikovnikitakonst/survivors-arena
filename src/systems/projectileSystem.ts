@@ -101,12 +101,10 @@ export const updateProjectiles = ({
           magnetRadius: 120,
         });
 
-        if (enemy.type === "boss" || enemy.type === "brute") {
-          enemy.isDying = true;
-          enemy.deathAnimationTime = 0;
-        } else {
-          enemies.splice(enemyIndex, 1);
-        }
+        enemy.isDying = true;
+        enemy.deathAnimationTime = 0;
+
+        enemy.deathAngle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
       }
 
       if (projectile.pierce > 0) {

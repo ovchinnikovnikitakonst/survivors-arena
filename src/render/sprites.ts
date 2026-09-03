@@ -81,13 +81,13 @@ export const sprites = {
     loadImage(`/sprites/zombie/walk/walk${String(index).padStart(4, "0")}.png`),
   ),
 
-  bruteMove: Array.from({ length: 17 }, (_, index) =>
-    loadImage(`/sprites/brute/move/skeleton-move_${index}.png`),
-  ),
+  // bruteMove: Array.from({ length: 17 }, (_, index) =>
+  //   loadImage(`/sprites/brute/move/skeleton-move_${index}.png`),
+  // ),
 
-  bruteAttack: Array.from({ length: 9 }, (_, index) =>
-    loadImage(`/sprites/brute/attack/skeleton-attack_${index}.png`),
-  ),
+  // bruteAttack: Array.from({ length: 9 }, (_, index) =>
+  //   loadImage(`/sprites/brute/attack/skeleton-attack_${index}.png`),
+  // ),
 
   runnerMove: Array.from({ length: 31 }, (_, index) =>
     loadImage(
@@ -110,6 +110,18 @@ export const sprites = {
   shooterAttack: Array.from({ length: 20 }, (_, index) =>
     loadImage(
       `/sprites/shooter/attack/attack03_${String(index).padStart(4, "0")}.png`,
+    ),
+  ),
+
+  zombieDeath: Array.from({ length: 17 }, (_, index) =>
+    loadImage(
+      `/sprites/zombie/death/death01_${String(index).padStart(4, "0")}.png`,
+    ),
+  ),
+
+  runnerDeath: Array.from({ length: 17 }, (_, index) =>
+    loadImage(
+      `/sprites/runner/death/death02_${String(index).padStart(4, "0")}.png`,
     ),
   ),
 
