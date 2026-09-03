@@ -71,6 +71,9 @@ export type EnemyProjectile = {
   directionX: number;
   directionY: number;
   damage: number;
+  startX: number;
+  startY: number;
+  maxDistance: number;
 };
 
 export type ExperienceOrb = {
@@ -115,3 +118,15 @@ export type WorldObject = {
 export type GameState = "playing" | "paused" | "levelUp" | "gameOver";
 
 export type WeaponType = "pistol" | "shotgun" | "rifle";
+
+export type AcidPuddle = {
+  x: number;
+  y: number;
+
+  radius: number;
+
+  lifetime: number;
+  duration: number;
+
+  damageCooldown: number;
+};

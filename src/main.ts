@@ -18,6 +18,9 @@ import { renderHud } from "./render/hud";
 import type { HitEffect } from "./game/types";
 import { renderHitEffects } from "./render/hitEffects";
 import { playBackgroundMusic } from "./audio/audio";
+import type { AcidPuddle } from "./game/types";
+import { updateAcidPuddles } from "./systems/acidPuddleSystem";
+import { renderAcidPuddles } from "./render/acidPuddles";
 
 import type {
   Enemy,
@@ -68,6 +71,8 @@ const experienceOrbs: ExperienceOrb[] = [];
 const projectiles: Projectile[] = [];
 // массив врежеских пуль
 const enemyProjectiles: EnemyProjectile[] = [];
+
+const acidPuddles: AcidPuddle[] = [];
 // массив попаданий
 const hitEffects: HitEffect[] = [];
 
@@ -212,6 +217,7 @@ const update = (deltaTime: number) => {
     hitEffects,
     projectiles,
     enemyProjectiles,
+    acidPuddles,
     enemies,
     experienceOrbs,
     deltaTime,
@@ -219,6 +225,15 @@ const update = (deltaTime: number) => {
     onEnemyKilled: () => {
       kills += 1;
     },
+
+    onPlayerDeath: () => {
+      gameState = "gameOver";
+    },
+  });
+
+  updateAcidPuddles({
+    acidPuddles,
+    deltaTime,
 
     onPlayerDeath: () => {
       gameState = "gameOver";
@@ -269,6 +284,8 @@ const render = () => {
 
   // фон
   renderWorld(ctx, canvas);
+
+  renderAcidPuddles(ctx, acidPuddles);
 
   renderPlayer(ctx);
 

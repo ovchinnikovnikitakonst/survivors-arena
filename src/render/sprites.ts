@@ -137,6 +137,8 @@ export const sprites = {
 
   xp: loadImage("/sprites/xp.png"),
 
+  acidPuddleSheet: loadImage("/sprites/acid/puddle_sheet.png"),
+
   bossDeath: Array.from({ length: 25 }, (_, index) =>
     loadImage(
       `/sprites/boss/Boss-Death_${String(index + 1).padStart(2, "0")}.png`,

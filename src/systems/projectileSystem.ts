@@ -7,11 +7,13 @@ import type {
   EnemyProjectile,
   ExperienceOrb,
   HitEffect,
+  AcidPuddle,
 } from "../game/types";
 
 type UpdateProjectilesParams = {
   projectiles: Projectile[];
   enemyProjectiles: EnemyProjectile[];
+  acidPuddles: AcidPuddle[];
   enemies: Enemy[];
   experienceOrbs: ExperienceOrb[];
   hitEffects: HitEffect[];
@@ -23,6 +25,7 @@ type UpdateProjectilesParams = {
 export const updateProjectiles = ({
   projectiles,
   enemyProjectiles,
+  acidPuddles,
   enemies,
   experienceOrbs,
   hitEffects,
@@ -30,16 +33,45 @@ export const updateProjectiles = ({
   onEnemyKilled,
   onPlayerDeath,
 }: UpdateProjectilesParams) => {
-  // движение пуль игрока
   for (const projectile of projectiles) {
     projectile.x += projectile.velocityX * deltaTime;
     projectile.y += projectile.velocityY * deltaTime;
   }
 
-  // вражеские пули движение
   for (const projectile of enemyProjectiles) {
     projectile.x += projectile.directionX * projectile.speed * deltaTime;
     projectile.y += projectile.directionY * projectile.speed * deltaTime;
+  }
+
+  for (
+    let projectileIndex = enemyProjectiles.length - 1;
+    projectileIndex >= 0;
+    projectileIndex--
+  ) {
+    const projectile = enemyProjectiles[projectileIndex];
+
+    const traveledDistance = Math.hypot(
+      projectile.x - projectile.startX,
+      projectile.y - projectile.startY,
+    );
+
+    if (traveledDistance < projectile.maxDistance) {
+      continue;
+    }
+
+    acidPuddles.push({
+      x: projectile.x,
+      y: projectile.y,
+
+      radius: 40,
+
+      lifetime: 0,
+      duration: 5,
+
+      damageCooldown: 0,
+    });
+
+    enemyProjectiles.splice(projectileIndex, 1);
   }
 
   for (
@@ -69,7 +101,6 @@ export const updateProjectiles = ({
         continue;
       }
 
-      // пуля уже попалда во врага
       projectile.hitEnemies.add(enemy);
 
       enemy.hp -= projectile.damage;
@@ -113,6 +144,7 @@ export const updateProjectiles = ({
         const pushDistance = enemy.radius + projectile.radius + 2;
 
         projectile.x = enemy.x + projectile.directionX * pushDistance;
+
         projectile.y = enemy.y + projectile.directionY * pushDistance;
 
         continue;

@@ -52,6 +52,9 @@ export const updateEnemyCombat = (
         x: enemy.x,
         y: enemy.y,
 
+        startX: enemy.x,
+        startY: enemy.y,
+
         radius: 7,
         speed: 220,
 
@@ -59,6 +62,8 @@ export const updateEnemyCombat = (
         directionY: dy / distance,
 
         damage: enemy.damage,
+
+        maxDistance: 300,
       });
 
       enemy.hasDealtAttackDamage = true;
