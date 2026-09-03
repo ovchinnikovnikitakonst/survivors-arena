@@ -1,5 +1,12 @@
 import { player } from "../entities/player";
-import { weapon } from "../entities/weapon";
+
+import {
+  increaseProjectileSpeed,
+  increaseProjectileSize,
+  increaseAttackSpeed,
+  increasePiercing,
+  increaseDamage,
+} from "../entities/weapon";
 
 import type { Upgrade } from "../game/types";
 
@@ -32,41 +39,31 @@ const upgrades: Upgrade[] = [
   {
     name: "Fast Bullets",
     description: "+25% projectile speed",
-    apply: () => {
-      weapon.projectileSpeed *= 1.25;
-    },
+    apply: increaseProjectileSpeed,
   },
 
   {
     name: "Big Bullets",
     description: "+30% projectile size",
-    apply: () => {
-      weapon.projectileRadius *= 1.3;
-    },
+    apply: increaseProjectileSize,
   },
 
   {
     name: "Rapid Fire",
     description: "+20% attack speed",
-    apply: () => {
-      weapon.fireInterval = Math.max(0.1, weapon.fireInterval * 0.8);
-    },
+    apply: increaseAttackSpeed,
   },
 
   {
     name: "Piercing",
     description: "+1 enemy penetration",
-    apply: () => {
-      weapon.projectilePierce += 1;
-    },
+    apply: increasePiercing,
   },
 
   {
     name: "Damage",
     description: "+1 projectile damage",
-    apply: () => {
-      weapon.projectileDamage += 1;
-    },
+    apply: increaseDamage,
   },
 ];
 

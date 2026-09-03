@@ -19,6 +19,14 @@ type Weapon = {
 
 type WeaponConfig = Omit<Weapon, "type" | "shootCooldown">;
 
+type WeaponUpgrades = {
+  projectileSpeedMultiplier: number;
+  projectileRadiusMultiplier: number;
+  projectileDamageBonus: number;
+  projectilePierceBonus: number;
+  fireIntervalMultiplier: number;
+};
+
 const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
   pistol: {
     projectileSpeed: 500,
@@ -53,6 +61,14 @@ const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
 
 const DEFAULT_WEAPON_TYPE: WeaponType = "pistol";
 
+const weaponUpgrades: WeaponUpgrades = {
+  projectileSpeedMultiplier: 1,
+  projectileRadiusMultiplier: 1,
+  projectileDamageBonus: 0,
+  projectilePierceBonus: 0,
+  fireIntervalMultiplier: 1,
+};
+
 export const weapon: Weapon = {
   type: DEFAULT_WEAPON_TYPE,
   shootCooldown: 0,
@@ -60,16 +76,75 @@ export const weapon: Weapon = {
   ...WEAPON_CONFIGS[DEFAULT_WEAPON_TYPE],
 };
 
+const applyWeaponStats = () => {
+  const config = WEAPON_CONFIGS[weapon.type];
+
+  weapon.projectileSpeed =
+    config.projectileSpeed * weaponUpgrades.projectileSpeedMultiplier;
+
+  weapon.projectileRadius =
+    config.projectileRadius * weaponUpgrades.projectileRadiusMultiplier;
+
+  weapon.projectileDamage =
+    config.projectileDamage + weaponUpgrades.projectileDamageBonus;
+
+  weapon.projectilePierce =
+    config.projectilePierce + weaponUpgrades.projectilePierceBonus;
+
+  weapon.fireInterval = Math.max(
+    0.1,
+    config.fireInterval * weaponUpgrades.fireIntervalMultiplier,
+  );
+
+  weapon.projectileCount = config.projectileCount;
+  weapon.spread = config.spread;
+};
+
 export const setWeapon = (type: WeaponType) => {
   weapon.type = type;
 
-  Object.assign(weapon, WEAPON_CONFIGS[type]);
+  applyWeaponStats();
 
   weapon.shootCooldown = 0;
 };
 
+export const increaseProjectileSpeed = () => {
+  weaponUpgrades.projectileSpeedMultiplier *= 1.25;
+  applyWeaponStats();
+};
+
+export const increaseProjectileSize = () => {
+  weaponUpgrades.projectileRadiusMultiplier *= 1.3;
+  applyWeaponStats();
+};
+
+export const increaseAttackSpeed = () => {
+  weaponUpgrades.fireIntervalMultiplier *= 0.8;
+  applyWeaponStats();
+};
+
+export const increasePiercing = () => {
+  weaponUpgrades.projectilePierceBonus += 1;
+  applyWeaponStats();
+};
+
+export const increaseDamage = () => {
+  weaponUpgrades.projectileDamageBonus += 1;
+  applyWeaponStats();
+};
+
 export const resetWeapon = () => {
-  setWeapon(DEFAULT_WEAPON_TYPE);
+  weaponUpgrades.projectileSpeedMultiplier = 1;
+  weaponUpgrades.projectileRadiusMultiplier = 1;
+  weaponUpgrades.projectileDamageBonus = 0;
+  weaponUpgrades.projectilePierceBonus = 0;
+  weaponUpgrades.fireIntervalMultiplier = 1;
+
+  weapon.type = DEFAULT_WEAPON_TYPE;
+
+  applyWeaponStats();
+
+  weapon.shootCooldown = 0;
 };
 
 export const shoot = (
@@ -97,19 +172,16 @@ export const shoot = (
   const baseDirectionX = dx / distance;
   const baseDirectionY = dy / distance;
 
-  const spread = 0.2;
-
   for (let i = 0; i < weapon.projectileCount; i++) {
-    const randomSpread = (Math.random() - 0.4) * 0.06;
+    const randomSpread = (Math.random() - 0.5) * weapon.spread;
 
     const offset =
-      (i - (weapon.projectileCount - 1) / 2) * spread + randomSpread;
+      (i - (weapon.projectileCount - 1) / 2) * weapon.spread + randomSpread;
 
     const cos = Math.cos(offset);
     const sin = Math.sin(offset);
 
     const directionX = baseDirectionX * cos - baseDirectionY * sin;
-
     const directionY = baseDirectionX * sin + baseDirectionY * cos;
 
     projectiles.push({
@@ -127,6 +199,8 @@ export const shoot = (
 
       damage: weapon.projectileDamage,
       pierce: weapon.projectilePierce,
+
+      hitEnemies: new Set(),
     });
   }
 };

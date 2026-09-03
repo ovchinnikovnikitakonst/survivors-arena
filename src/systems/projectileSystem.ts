@@ -36,9 +36,9 @@ export const updateProjectiles = ({
     projectile.y += projectile.velocityY * deltaTime;
   }
 
+  // вражеские пули движение
   for (const projectile of enemyProjectiles) {
     projectile.x += projectile.directionX * projectile.speed * deltaTime;
-
     projectile.y += projectile.directionY * projectile.speed * deltaTime;
   }
 
@@ -56,6 +56,10 @@ export const updateProjectiles = ({
         continue;
       }
 
+      if (projectile.hitEnemies.has(enemy)) {
+        continue;
+      }
+
       const distance = Math.hypot(
         projectile.x - enemy.x,
         projectile.y - enemy.y,
@@ -65,16 +69,13 @@ export const updateProjectiles = ({
         continue;
       }
 
+      // пуля уже попалда во врага
+      projectile.hitEnemies.add(enemy);
+
       enemy.hp -= projectile.damage;
       enemy.hitFlash = 0.12;
 
       playHitSound();
-
-      if (projectile.pierce > 0) {
-        projectile.pierce -= 1;
-      } else {
-        projectiles.splice(projectileIndex, 1);
-      }
 
       hitEffects.push({
         x: projectile.x,
@@ -87,10 +88,7 @@ export const updateProjectiles = ({
       const knockbackForce = 12;
 
       enemy.x += projectile.directionX * knockbackForce;
-
       enemy.y += projectile.directionY * knockbackForce;
-
-      projectiles.splice(projectileIndex, 1);
 
       if (enemy.hp <= 0) {
         onEnemyKilled();
@@ -110,6 +108,19 @@ export const updateProjectiles = ({
           enemies.splice(enemyIndex, 1);
         }
       }
+
+      if (projectile.pierce > 0) {
+        projectile.pierce -= 1;
+
+        const pushDistance = enemy.radius + projectile.radius + 2;
+
+        projectile.x = enemy.x + projectile.directionX * pushDistance;
+        projectile.y = enemy.y + projectile.directionY * pushDistance;
+
+        continue;
+      }
+
+      projectiles.splice(projectileIndex, 1);
 
       break;
     }

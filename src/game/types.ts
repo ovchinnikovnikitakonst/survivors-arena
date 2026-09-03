@@ -58,6 +58,7 @@ export type Projectile = {
 
   damage: number;
   pierce: number;
+  hitEnemies: Set<Enemy>;
 };
 
 export type EnemyProjectile = {
